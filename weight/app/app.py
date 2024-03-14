@@ -1,8 +1,9 @@
 from flask import Flask
-import routes
+from routes.weight import weight_blueprint
 # Create the Flask application instance
 app = Flask(__name__)
 
+app.register_blueprint(weight_blueprint)
 # Define a route for the root URL ("/") to return "Hello, World!"
 @app.route('/')
 def hello_world():

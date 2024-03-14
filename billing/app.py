@@ -25,7 +25,10 @@ def home():
     print("home function")
     return "Hellooooo"
 
-
+@app.route("/health")
+def healthcheck():
+    status = {"status": "ok", "message": "Service is healthy"}
+    return jsonify(status), 200
 
 # @app.route('/api/chat/<room>', methods=['POST'])
 # def post_message(room):

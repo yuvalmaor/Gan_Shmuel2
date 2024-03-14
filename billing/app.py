@@ -110,6 +110,27 @@ def post_provider(provider):
     # Return created provider ID
     return jsonify({"id": provider_id}), 201
 
+@app.route('/provider/<string:provider_id>', methods=['PUT'])
+def update_provider(provider_id):
+    # Check if the provider exists in the dictionary using its GUID
+    if provider_id not in providers:
+        return jsonify({'message': 'Provider not found'}), 404
+
+    # Get the new name from the request body
+    data = request.get_json()
+    new_name = data.get('name')
+
+    # Validate the new name
+    if not new_name:
+        return jsonify({'message': 'No name provided'}), 400
+
+    # Update the provider's name
+    providers[provider_id]['name'] = new_name
+
+    # Return the updated provider info
+    return jsonify({'message': 'Provider updated successfully', 'provider': providers[provider_id]}), 200
+
+
 # from app.models import routes
 
 #     return 'Message posted successfully'

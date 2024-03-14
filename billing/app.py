@@ -5,21 +5,27 @@ from flask import Flask, jsonify, render_template, redirect, request, send_file,
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://root:1234@mysql/chat"
+app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://root:1234@mysql/billdb"  # Note the database name change to 'billdb'
 
 db = SQLAlchemy(app)
 
-# class Message(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     username = db.Column(db.String(100), nullable=False)
-#     message = db.Column(db.Text, nullable=False)
-#     date = db.Column(db.Date, nullable=False)
-#     time = db.Column(db.Time, nullable=False)
-#     room = db.Column(db.String(100), nullable=False)
+# Define SQLAlchemy models
+class Provider(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255))
 
-# # Create database tables before running the application
-# with app.app_context():
-#     db.create_all()
+class Rate(db.Model):
+    __tablename__ = 'Rates'  # Specify the table name explicitly to match the schema
+    product_id = db.Column(db.String(50), primary_key=True)
+    rate = db.Column(db.Integer, default=0)
+    scope = db.Column(db.String(50), db.ForeignKey('provider.id'))
+    provider = db.relationship('Provider', backref='rates')
+
+class Truck(db.Model):
+    __tablename__ = 'Trucks'  # Specify the table name explicitly to match the schema
+    id = db.Column(db.String(10), primary_key=True)
+    provider_id = db.Column(db.Integer, db.ForeignKey('provider.id'))
+    provider = db.relationship('Provider', backref='trucks')
 
 
 @app.route("/")
@@ -32,6 +38,15 @@ def home():
 def healthcheck():
     status = {"status": "ok", "message": "Service is healthy"}
     return jsonify(status), 200
+
+
+
+@app.route("/trucks")
+def get_trucks():
+    trucks = Truck.query.all()
+    truck_data = [{"id": truck.id, "provider_id": truck.provider_id} for truck in trucks]
+    return jsonify(truck_data)
+
 
 
 # In-memory storage for simplicity (replace with database later)

@@ -10,9 +10,12 @@ services:
           condition: service_healthy
     mysql:
       image: "mysql:8"
+      command: --init-file /data/application/init.sql
+      volumes:
+        - ./billingdb.sql:/data/application/init.sql
       environment:
         MYSQL_ROOT_PASSWORD: "1234"
-        MYSQL_DATABASE: "chat"
+        MYSQL_DATABASE: "billdb"
       networks:
         - db-net
       healthcheck:

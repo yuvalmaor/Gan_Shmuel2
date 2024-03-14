@@ -1,10 +1,11 @@
 from datetime import datetime
 import os
+from uuid import uuid4
 from flask import Flask, jsonify, render_template, redirect, request, send_file, url_for
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:1234@mysql/chat'
+app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://root:1234@mysql/chat"
 
 db = SQLAlchemy(app)
 
@@ -20,15 +21,38 @@ db = SQLAlchemy(app)
 # with app.app_context():
 #     db.create_all()
 
+
 @app.route("/")
 def home():
     print("home function")
     return "Hellooooo"
 
+
 @app.route("/health")
 def healthcheck():
     status = {"status": "ok", "message": "Service is healthy"}
     return jsonify(status), 200
+
+
+# In-memory storage for simplicity (replace with database later)
+providers = {}
+
+
+@app.route("/<provider>", methods=["POST"])
+def post_provider(provider):
+    # Check for unique name
+    if provider in providers:
+        return jsonify({"error": "Provider name already exists"}), 409
+
+    # Generate unique ID
+    provider_id = uuid4().hex
+
+    # Add provider to in-memory storage (replace with database write)
+    providers[provider] = provider_id
+
+    # Return created provider ID
+    return jsonify({"id": provider_id}), 201
+
 
 # @app.route('/api/chat/<room>', methods=['POST'])
 # def post_message(room):

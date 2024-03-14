@@ -93,6 +93,7 @@ def truckREST(id):
 
 # In-memory storage for simplicity (replace with database later)
 providers = {}
+trucks = {}
 
 
 @app.route("/<provider>", methods=["POST"])
@@ -131,6 +132,27 @@ def update_provider(provider_id):
     return jsonify({'message': 'Provider updated successfully', 'provider': providers[provider_id]}), 200
 
 
+#POST /truck
+#registers a truck in the system
+#- provider - known provider id
+#- id - the truck license plate
+
+
+@app.route('/truck', methods=['POST'])
+def register_truck():
+    data = request.get_json()
+    provider_id = data.get('provider')
+    truck_id = data.get('id')  # Assuming truck ID is the license plate
+    if not provider_id or not truck_id:
+        return jsonify({'message': 'Both provider ID and truck license plate must be provided'}), 400
+    if provider_id not in providers:
+        return jsonify({'message': 'Provider ID does not exist'}), 404
+    if truck_id in trucks:
+        return jsonify({'message': 'Truck ID must be unique'}), 400
+    trucks[truck_id] = {'provider': provider_id}
+    return jsonify({'message': 'Truck registered successfully', 'truckId': truck_id}), 201
+
+
 # from app.models import routes
 
 #     return 'Message posted successfully'
@@ -139,3 +161,4 @@ print (f"__name__: {__name__}")
 if __name__ == "__app.app__":
     print("Starting Flask application...")
     app.run(debug=True)
+

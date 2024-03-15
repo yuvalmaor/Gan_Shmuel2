@@ -6,7 +6,10 @@ from .routes import weight, health
 # Create the Flask application instance
 app = Flask(__name__)
 
+#config
 app.config.from_object(Config)
+
+#routes
 app.register_blueprint(weight.weight_blueprint)
 app.register_blueprint(health.health_blueprint)
 

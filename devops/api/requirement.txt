@@ -1,2 +1,4 @@
 flask==3.0.2
 swagger-ui-py==23.9.23
+gunicorn==21.2.0
+docker==7.0.0

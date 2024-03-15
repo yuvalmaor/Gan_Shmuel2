@@ -1,4 +1,4 @@
-from database import db
+from ..database import db
 
 class Transaction(db.Model):
     __tablename__ = 'transactions'
@@ -9,10 +9,9 @@ class Transaction(db.Model):
     containers = db.Column(db.String(10000))
     bruto = db.Column(db.Integer())
     truckTara = db.Column(db.Integer())
-    #!custom type
-    neto = db.Column(db.Integer(), default="na")
+    neto = db.Column(db.Integer())
     produce = db.Column(db.String(50))
-    session_id = db.Column(db.Integer())
+    session_id = db.Column(db.String(12))
 
     def __repr__(self):
         return f'<Container {self.container_id}>'

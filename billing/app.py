@@ -78,12 +78,12 @@ def truckREST(id):
     truck_data = {
         "id": truck.id,
         "provider_id": truck.provider_id
-        # "tara": trucks[id]["tara"],
+        # "tara": trucks[id]["tara"], 
         # "sessions": trucks[id]["sessions"]
     }
 
 
-    logger.info(f"Found truck: {truck_data}")
+    logger.info(f"Found trucksies: {truck_data}")
     # Return json
     return jsonify(truck_data), 200
 
@@ -105,19 +105,6 @@ def post_provider(provider):
 
     # Return created provider ID
     return jsonify({"id": provider_id}), 201
-
-
-# @app.route('/api/chat/<room>', methods=['POST'])
-# def post_message(room):
-#     username = request.form['username']
-#     message = request.form['msg']
-#     date = datetime.now().date()
-#     time = datetime.now().time()
-
-#     # Save the message to the database
-#     new_message = Message(username=username, message=message, date=date, time=time, room=room)
-#     db.session.add(new_message)
-#     db.session.commit()
 
 #     return 'Message posted successfully'
 print("test if being ran")

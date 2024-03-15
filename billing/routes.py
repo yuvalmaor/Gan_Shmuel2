@@ -24,7 +24,7 @@ def truckREST(id):
     print("t1:", t1)
     print("t2:", t2)
 
-     response_json = {
+    response_json = {
         "id": trucks[id]["id"],
         # "tara": trucks[id]["tara"],
         # "sessions": trucks[id]["sessions"]

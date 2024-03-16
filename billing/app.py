@@ -3,31 +3,35 @@ import os
 from uuid import uuid4
 from flask import Flask, jsonify, render_template, redirect, request, send_file, url_for
 from flask_sqlalchemy import SQLAlchemy
-from app import logger
+
+from . import db, app, logger
+
+from app.models import Truck, Rate, Provider
+# from models import Provider, Rate, Truck
+
+
+#from models.truck import Truck
 
 logger.info('Initializing Flask app')
-app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://root:1234@mysql/billdb"  # Note the database name change to 'billdb'
 
-db = SQLAlchemy(app)
 
 # Define SQLAlchemy models
-class Provider(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255))
+# class Provider(db.Model):
+#     id = db.Column(db.Integer, primary_key=True)
+#     name = db.Column(db.String(255))
 
-class Rate(db.Model):
-    __tablename__ = 'Rates'  # Specify the table name explicitly to match the schema
-    product_id = db.Column(db.String(50), primary_key=True)
-    rate = db.Column(db.Integer, default=0)
-    scope = db.Column(db.String(50), db.ForeignKey('provider.id'))
-    provider = db.relationship('Provider', backref='rates')
+# class Rate(db.Model):
+#     __tablename__ = 'Rates'  # Specify the table name explicitly to match the schema
+#     product_id = db.Column(db.String(50), primary_key=True)
+#     rate = db.Column(db.Integer, default=0)
+#     scope = db.Column(db.String(50), db.ForeignKey('provider.id'))
+#     provider = db.relationship('Provider', backref='rates')
 
-class Truck(db.Model):
-    __tablename__ = 'Trucks'  # Specify the table name explicitly to match the schema
-    id = db.Column(db.String(10), primary_key=True)
-    provider_id = db.Column(db.Integer, db.ForeignKey('provider.id'))
-    provider = db.relationship('Provider', backref='trucks')
+# class Truck(db.Model):
+#     __tablename__ = 'Trucks'  # Specify the table name explicitly to match the schema
+#     id = db.Column(db.String(10), primary_key=True)
+#     provider_id = db.Column(db.Integer, db.ForeignKey('provider.id'))
+#     provider = db.relationship('Provider', backref='trucks')
 
 
 @app.route("/")
@@ -105,6 +109,8 @@ def post_provider(provider):
 
     # Return created provider ID
     return jsonify({"id": provider_id}), 201
+
+# from app.models import routes
 
 #     return 'Message posted successfully'
 print("test if being ran")

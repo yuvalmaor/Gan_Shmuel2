@@ -21,15 +21,6 @@ cur = con.cursor()
 class ServiceDown(Exception):
     pass
 
-def containers_health():
-    services=DEFAULT_STATUS.copy()
-    for container in client.containers.list(all=True):
-        if "devops" not in container.name:
-            services[container.labels["com.docker.compose.project"]].update(
-                {container.labels['com.docker.compose.service']:container.status})
-    return services
-
-
 def repeating_task(interval: int):
     """Decorator for repeating a tasks and running
     in a separate thread
@@ -83,3 +74,11 @@ def init_db():
     id TEXT PRIMARY KEY,
     name TEXT,
     created_at datetime DEFAULT CURRENT_TIMESTAMP)""")
+
+def containers_health():
+    services=DEFAULT_STATUS.copy()
+    for container in client.containers.list(all=True):
+        if "devops" not in container.name:
+            services[container.labels["com.docker.compose.project"]].update(
+                {container.labels['com.docker.compose.service']:container.status})
+    return services

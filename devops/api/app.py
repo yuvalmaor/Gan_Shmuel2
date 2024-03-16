@@ -1,11 +1,17 @@
-from flask import Flask,request,jsonify
+from flask import Flask,request,jsonify,abort
 from swagger_ui import api_doc
-from multiprocessing import Pool
-from tasks import gunicorn_logger,deploy,health_check
+from multiprocessing import Pool,Process
+from util import init_db,SERVICES_PORT
+import time
+from tasks import gunicorn_logger,deploy,health_check,monitor
 
+def setup():
+   init_db()
+   for service in SERVICES_PORT:
+        monitor(port=SERVICES_PORT[service],service=service.capitalize())
 
 app=Flask(__name__)
-
+setup()
 app.logger.handlers = gunicorn_logger.handlers
 app.logger.setLevel(gunicorn_logger.level)
 
@@ -24,6 +30,11 @@ def trigger():
     results=pool.apply_async(deploy,())
     print(data)
     return "ok"
+
+@app.get("/check")
+def check():
+    # time.sleep(10)
+    abort(400)
 
 
 if __name__=="__main__":

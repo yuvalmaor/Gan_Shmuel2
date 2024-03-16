@@ -82,7 +82,7 @@
           "billing": {
             "$ref": "#/components/schemas/Service"
           },
-          "Weight": {
+          "weight": {
             "$ref": "#/components/schemas/Service"
           }
         }

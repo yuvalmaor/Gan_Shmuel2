@@ -1,22 +1,17 @@
-import logging
-import time
-from typing import Callable
-from uuid import uuid4
-from functools import wraps
 
-gunicorn_logger = logging.getLogger('gunicorn.error')
+import urllib.request
 
-def task(f):
-    @wraps(f)
-    def wrapper(*args, **kwds):
-        task_id=uuid4()
-        # print(f"[{task_id}] Task {f.__name__} started.")
-        gunicorn_logger.info(f"[{task_id}]Task {f.__name__} started.")
-        result=f(*args, **kwds)
-        # print(f"[{task_id}] Task {f.__name__} finished.")
-        gunicorn_logger.info(f"[{task_id}]Task {f.__name__} finished.")
-        return result
-    return wrapper
+from util import (ServiceDown, containers_health, gunicorn_logger,
+                  repeating_task, task,SERVICES_PORT)
+
+
+@repeating_task(10)
+def monitor(port,service):
+    """If not Successful responses urlopen will raise HTTPError"""
+    try:
+        urllib.request.urlopen(f"http://localhost:{port}/health",timeout=5)
+    except:
+        raise ServiceDown(f"{service} is down")
 
 def callback_task(a,*args, **kwargs):
     pass
@@ -28,11 +23,15 @@ def deploy():
 
 @task
 def health_check():
-    #docker compose ps --format "{{.Service}} {{.State}}"
+    services=containers_health()
+    for name in services:
+        try:
+            urllib.request.urlopen(f"http://localhost:{SERVICES_PORT[name]}/health",timeout=5)
+        except:
+            services['name']['api']='down'
     return {"sevices":{"Weight": {"api":"running","database":"running"},
                      "Billing":{"api":"running","database":"running"}}}
 
-# pool=TaskManager()
 
 if __name__ == '__main__':
     print(health_check())

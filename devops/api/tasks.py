@@ -17,6 +17,11 @@ def callback_task(a,*args, **kwargs):
     pass
 
 @task
+def git_pull():
+    """To be implemented"""
+    pass
+
+@task
 def deploy():
     """To be implemented"""
     pass

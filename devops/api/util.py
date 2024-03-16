@@ -1,15 +1,15 @@
-import logging
-import sched
-import sqlite3
 import time
-from collections import defaultdict
-from datetime import datetime
+import sched
+import logging
+import sqlite3
+from uuid import uuid4
 from functools import wraps
 from threading import Thread
-from uuid import uuid4
-from config import SERVICES_PORT,DEFAULT_STATUS
-import urllib.request
+from datetime import datetime
+
+
 import docker
+from config import DEFAULT_STATUS, SERVICES_PORT
 
 client = docker.from_env()
 scheduler = sched.scheduler(time.time, time.sleep)

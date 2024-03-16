@@ -20,20 +20,25 @@ def get_weights():
         'to', datetime.now().strftime('%Y%m%d%H%M%S'))
     filter_directions = request.args.get(
         'filter', 'in,out,none').replace('"', '').split(',')
-
-    from_date = datetime.strptime(from_date_str, '%Y%m%d%H%M%S')
-    to_date = datetime.strptime(to_date_str, '%Y%m%d%H%M%S')
-
+      
+    try:  
+        from_date = datetime.strptime(from_date_str, '%Y%m%d%H%M%S')
+        to_date = datetime.strptime(to_date_str, '%Y%m%d%H%M%S')
+    except:
+        return jsonify({"error": "The provided date parameters are not valid. Ensure they are in the 'YYYYMMDDHHMMSS' format and both dates are provided."})
+    
     # database queries
     logger.info(
         f"Retrieving transactions from {from_date} to {to_date} with filter directions: {filter_directions}")
 
-    #! add a try and except
-    transactions = Transaction.query.filter(
-        Transaction.datetime >= from_date,
-        Transaction.datetime <= to_date,
-        Transaction.direction.in_(filter_directions)
-    ).all()
+    try:
+        transactions = Transaction.query.filter(
+            Transaction.datetime >= from_date,
+            Transaction.datetime <= to_date,
+            Transaction.direction.in_(filter_directions)
+        ).all()
+    except:
+        return jsonify({"error": "Can't get transactions from the database"}), 500
 
     logger.info(
         f"Retrieved {len(transactions)} transactions from the database")

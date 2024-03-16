@@ -4,7 +4,7 @@ from ..models import Transaction, Container
 from ..config import logger
 import string
 import secrets
-from ..utils.weight import caclc_containers_weights, calc_transaction_neto
+from ..utils.weight import calc_containers_weights, calc_transaction_neto
 from ..database import db
 
 weight_blueprint = Blueprint('weight_blueprint', __name__)
@@ -55,93 +55,113 @@ def get_weights():
 
 @weight_blueprint.route('/weight', methods=['POST'])
 def create_weight():
-    data = request.json
-    date = datetime.now()
+    data = dict(request.json)
     #! direction: no actual default
     #! truck: if none in direction then 'na'
     #! containers: can be an empty string
     #! weight is dependent on the direction
     #! produce : default 'na'
+    direction = data.get("direction")
+    truck = data.get("truck", "na")
+    containers = data.get("containers","")
+    weight = data.get("weight")
+    unit = data.get("unit")
+    force = data.get("force", False)
+    produce = data.get("produce", "na")
 
-    direction, truck, containers, weight, unit, force, produce = data.get("direction", "none"), data.get(
-        "truck", "na"), data.get("containers"), data.get("weight"), data.get("unit"), data.get("force"), data.get("produce", "na")
-
+    if not direction or not weight or not unit:
+        return jsonify({"error":"Invalid request, the params direction, weight, unit are required"}), 400
+    if direction not in {"in", "out", "none"}:
+        return jsonify({"error":"Invalid request, Invalid direction"}), 400
+ 
     #if direction none and has a truck number return an error
-    transactions = []
+    transactions : list[Transaction] = []
     if(direction == 'none'):
-        if(not truck == 'na'):
-            return jsonify({"error":"Cannot have a truck licence associated with a container."})
-        else:
-            transactions = Transaction.query.all()
+        if(truck is not 'na'):
+            return jsonify({"error":"Cannot have a truck licence associated with a container."}), 400
+        transactions = Transaction.query.all()
     else:
-        transactions = Transaction.query.filter(Transaction.truck == truck).all()      
+        transactions = Transaction.query.order_by(Transaction.datetime).filter(Transaction.truck == truck).all()      
 
-    #!what in a case of empty transactions?
     former_transaction = transactions[-1] if transactions else None
-    
-    # out without an in generates an error
-    if ((not former_transaction) and direction == 'out'):
-        return jsonify({"error": "Cannot create an 'out' transaction without an existing 'in' transaction."}), 400
+    if not former_transaction:
+        if direction == "out":
+            return jsonify({"error": "Cannot create an 'out' transaction without an existing 'in' transaction."}), 400 
+    else:
+        # none after in returns an error
+        if (former_transaction.direction == 'in' and direction == 'none'):
+            return jsonify({"error": "Cannot create a 'none' transaction after an 'in' transaction."}), 400
+        # update weight if in after in or out after out
+        if ((direction == 'in' and former_transaction.direction == 'in') or (direction == 'out' and former_transaction.direction == 'out')):
+            if (force):
+                try:
+                    if (direction == 'in'):
+                        former_transaction.bruto = weight
+                        db.session.commit()
+                        return {
+                            "id": former_transaction.id,
+                            "truck": former_transaction.truck,
+                            "bruto": former_transaction.bruto
+                        }
+                    else:
+                        #! need to check about the calculation of the containers
+                        former_transaction.truckTara = weight                        
+                        db.session.commit()
+                        return {
+                            "id": former_transaction.id,
+                            "truck": former_transaction.truck,
+                            "bruto": former_transaction.bruto,
+                            "truckTara": former_transaction.truckTara,
+                            "neto": former_transaction.neto
+                        }, 200
+                except:
+                    return jsonify({"error": "Couldn't update weight"}), 500
+            else:
+                return jsonify({"error": "Invalid transaction sequence"}), 500
 
-    # none after in returns an error
-    if (former_transaction.direction == 'in' and direction == 'none'):
-        return jsonify({"error": "Cannot create a 'none' transaction after an 'in' transaction."}), 400
-
-    # update weight if in after in or out after out
-    if ((direction == 'in' and former_transaction.direction == 'in') or (direction == 'out' and former_transaction.direction == 'out')):
-        if (force):
-            try:
-                if (direction == 'in'):
-                    former_transaction.bruto = weight
-                else:
-                    former_transaction.truck_tara = weight         
-                #!test this
-                db.session.commit()
-            except:
-                return jsonify({"error": "Couldn't update weight"}), 500
-        else:
-            return jsonify({"error": "Invalid transaction sequence"}), 500
-
-#----------------------------------------------------
-
-    if direction == "in":
+    #----------------------------------------------------
+            
+    date_time_now = datetime.now()
+    new_transaction = None
+    if direction == "in" or direction == "none":           
         alphabet = string.digits
         session_id = ''.join(secrets.choice(alphabet) for _ in range(12))
-        new_transaction = Transaction(datetime=date, bruto=int(weight), direction=direction,
-                                      truck=truck, containers=containers, produce=produce,
-                                      session_id=session_id)
-        with db.session() as session:
-            session.add(new_transaction)
-            session.commit()
-            session.refresh(new_transaction)
+        new_transaction = Transaction(datetime=date_time_now, bruto=int(weight), direction=direction,
+                                        truck=truck, containers=containers, produce=produce,
+                                        session_id=session_id)
 
-        return {
-            "id": new_transaction.id,
-            "truck": new_transaction.truck,
-            "bruto": new_transaction.bruto
-        }
     if direction == "out":
-        transactions = Transaction.query.filter(
-            Transaction.truck == truck).all()
-        if not transactions:
-            return "Error", 500
-        curr_transaction: Transaction = transactions[-1]
-        if curr_transaction.direction == "out":
-            return "Error", 500
 
-        curr_transaction.truckTara = weight
         used_containers_weights = Container.query.with_entities(Container.weight, Container.unit).filter(
-            Container.container_id.in_(curr_transaction.containers.split(","))).all()
-        containers_weight = caclc_containers_weights(
-            used_containers_weights, unit)
-        curr_transaction.neto = calc_transaction_neto(
-            curr_transaction.bruto, curr_transaction.truckTara, containers_weight)
+            Container.container_id.in_(former_transaction.containers.split(","))).all()
+        num_of_containers = len(former_transaction.containers.split(","))
+        containers_weight = calc_containers_weights(
+            used_containers_weights, unit) if num_of_containers == len(used_containers_weights) else None
 
-        curr_transaction.direction = "out"
-        return {
-            "id": curr_transaction.id,
-            "truck": curr_transaction.truck,
-            "bruto": curr_transaction.bruto,
-            "truckTara": curr_transaction.truckTara,
-            "neto": curr_transaction.neto
-        }, 200
+        print(used_containers_weights)
+        print(containers_weight)
+        neto = calc_transaction_neto(
+            former_transaction.bruto, weight, containers_weight) if containers_weight else None
+        
+        new_transaction = Transaction(truck=truck, direction = direction, datetime=date_time_now, 
+                                    containers=containers, bruto = former_transaction.bruto, neto=neto,
+                                    truckTara=weight, produce=produce, session_id=former_transaction.session_id)
+    
+    
+    try:
+        db.session.add(new_transaction)
+        db.session.commit()
+        db.session.refresh(new_transaction)
+    
+    except Exception as e:
+        return jsonify({"error": "Cannot add transaction"}), 500
+
+    res = {
+        "id": new_transaction.id,
+        "truck": new_transaction.truck,
+        "bruto": new_transaction.bruto
+    }
+    if direction == "out":
+        res["truckTara"] = new_transaction.truckTara
+        res["neto"] = new_transaction.neto or "na"
+    return res, 200

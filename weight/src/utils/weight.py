@@ -1,7 +1,9 @@
 
-def caclc_containers_weights(containers_weights , unit):
+def calc_containers_weights(containers_weights , unit):
     res = 0
     for container_weight, container_unit in containers_weights:
+        if not container_weight or not container_weight:
+            return None
         if container_unit == unit:
             res += container_weight
         else:

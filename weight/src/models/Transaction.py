@@ -14,4 +14,4 @@ class Transaction(db.Model):
     session_id = db.Column(db.Integer(), default = None)
 
     def __repr__(self):
-        return f'<Container {self.container_id}>'
+        return f'<Transaction {self.id}>'

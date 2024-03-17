@@ -83,8 +83,8 @@ Follow best practices for writing commit messages:
 - Then add and commit the changes to your remote branch.
 - Do a back merge with the branch that is the grand truth.
 - Handle conflicts and check that you didn't destroy anything in the grand truth branch.
-- If everything works as it should:
-Make a pull request and ask to merge your current branch with the grand truth branch.
+- If everything works as it should, again push the merge changes to your remote branch.
+- Make a pull request and ask to merge your current branch with the grand truth branch.
 
 
 ### Pull Request Process

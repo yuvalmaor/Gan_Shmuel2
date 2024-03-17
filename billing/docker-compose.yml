@@ -1,0 +1,27 @@
+services:
+    app:
+      build: .
+      ports:
+      - "5000:5000"
+      networks:
+        - db-net
+      depends_on:
+        mysql: 
+          condition: service_healthy
+    mysql:
+      image: "mysql:8"
+      command: --init-file /data/application/init.sql
+      volumes:
+        - ./billingdb.sql:/data/application/init.sql
+      environment:
+        MYSQL_ROOT_PASSWORD: "1234"
+        MYSQL_DATABASE: "billdb"
+      networks:
+        - db-net
+      healthcheck:
+        test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 --password="1234" --silent']
+        interval: 3s
+        retries: 5
+        start_period: 30s
+networks:
+    db-net: 

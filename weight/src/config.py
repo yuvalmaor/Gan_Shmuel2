@@ -12,7 +12,7 @@ HOST = os.environ.get('HOST')
 PORT = int(os.environ.get('PORT'))
 
 #logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', filename="./logs/weight-logs.txt")
 logger = logging.getLogger(__name__)
 
 class Config:

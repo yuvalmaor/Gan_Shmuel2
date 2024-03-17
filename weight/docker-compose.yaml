@@ -33,4 +33,4 @@ services:
 volumes:
   weight-database:
   weight-logs:
-  external : true
+    external: true

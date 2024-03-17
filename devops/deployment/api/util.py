@@ -11,7 +11,6 @@ import docker
 from api.config import DEFAULT_STATUS, SERVICES_PORT
 
 client = docker.from_env()
-scheduler = sched.scheduler(time.time, time.sleep)
 gunicorn_logger = logging.getLogger('gunicorn.error')
 con = sqlite3.connect("test.sqlite", check_same_thread=False)
 cur = con.cursor()

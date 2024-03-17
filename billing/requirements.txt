@@ -2,3 +2,4 @@ Flask
 Flask-SQLAlchemy
 PyMySQL[rsa]
 SQLAlchemy
+requests==2.26.0

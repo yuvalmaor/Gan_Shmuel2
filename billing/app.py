@@ -1,38 +1,12 @@
 from datetime import datetime
 import os
 from uuid import uuid4
-from flask import Flask, jsonify, render_template, redirect, request, send_file, url_for
-from flask_sqlalchemy import SQLAlchemy
-
+from flask import Flask, jsonify, render_template, redirect,  request, send_file, url_for
+import requests
 from . import db, app, logger
-
+import unittest
+from flask_sqlalchemy import SQLAlchemy
 from app.models import Truck, Rate, Provider
-# from models import Provider, Rate, Truck
-
-
-#from models.truck import Truck
-
-logger.info('Initializing Flask app')
-
-
-# Define SQLAlchemy models
-# class Provider(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     name = db.Column(db.String(255))
-
-# class Rate(db.Model):
-#     __tablename__ = 'Rates'  # Specify the table name explicitly to match the schema
-#     product_id = db.Column(db.String(50), primary_key=True)
-#     rate = db.Column(db.Integer, default=0)
-#     scope = db.Column(db.String(50), db.ForeignKey('provider.id'))
-#     provider = db.relationship('Provider', backref='rates')
-
-# class Truck(db.Model):
-#     __tablename__ = 'Trucks'  # Specify the table name explicitly to match the schema
-#     id = db.Column(db.String(10), primary_key=True)
-#     provider_id = db.Column(db.Integer, db.ForeignKey('provider.id'))
-#     provider = db.relationship('Provider', backref='trucks')
-
 
 @app.route("/")
 def home():
@@ -58,38 +32,45 @@ def get_trucks():
 
 @app.route("/truck/<id>/", methods=['GET']) # could be extended to other methods
 def truckREST(id):
-    logger.info(f"in /truck/<id>/:")
-    trucks = Truck.query.all()
-    truck = Truck.query.filter_by(id=id).first()
-    # Check if the truck exists
-    if truck is None:
-        logger.warning(f"Truck with ID {id} not found")
-        return jsonify({"error": f"Truck with ID {id} not found"}), 404
+    try:
+        logger.info(f"in truckREST: {truckREST}")
+        # trucks = Truck.query.all()
+        truck: int = Truck.query.filter_by(id=id).first()
+        # Check if the truck exists
+        if truck is None:
+            logger.warning(f"Truck with ID {id} not found")
+            return jsonify({"error": f"Truck with ID {id} not found"}), 404
 
-      # Set default t1 and t2
-    t1_default = "01000000"  # 1st of month at 00:00:00
-    t2_default = "now"  # Assuming "now" means the current time
+        # Set default t1 and t2
+        t1_default: str = "01000000"  # 1st of month at 00:00:00
+        t2_default: str = "now"  # Assuming "now" means the current time
 
-    t1 = request.args.get("from", t1_default)
-    t2 = request.args.get("to", t2_default)
+        t1: str = request.args.get("from", t1_default)
+        t2: str = request.args.get("to", t2_default)
 
-     # Here you may want to convert t1 and t2 to proper datetime objects
-    # For simplicity, let's just print them for now
-    print("t1:", t1)
-    print("t2:", t2)
+        # Here you may want to convert t1 and t2 to proper datetime objects
+        # For simplicity, let's just print them for now
 
+        logger.info(f"after setting default - t1: {t1}, t2: {t2}")
 
-    truck_data = {
-        "id": truck.id,
-        "provider_id": truck.provider_id
-        # "tara": trucks[id]["tara"], 
-        # "sessions": trucks[id]["sessions"]
-    }
+        # Make the GET request to the third-party API
+        url = f"https://weight2/item/{id}?from={t1}&to={t2}"
+        response = requests.get(url)
 
+        if response.status_code == 404:
+            return jsonify({"error": f"Truck with ID {id} not found"}), 404
+        elif response.status_code != 200:
+            return jsonify({"error": "Failed to retrieve truck data"}), response.status_code
+        truck_data: dict[str,str] = response.json()
+        logger.info(f"Found truck_data: {truck_data}")
+    
+        # Return json
+        return jsonify(truck_data), 200
+    # TODO: check connectivity before or after
 
-    logger.info(f"Found trucksies: {truck_data}")
-    # Return json
-    return jsonify(truck_data), 200
+    except Exception as e:
+        logger.error(f"An exception occurred: {e}")
+        return e.status_code
 
 # In-memory storage for simplicity (replace with database later)
 providers = {}
@@ -110,11 +91,15 @@ def post_provider(provider):
     # Return created provider ID
     return jsonify({"id": provider_id}), 201
 
-# from app.models import routes
+
 
 #     return 'Message posted successfully'
 print("test if being ran")
-print (f"__name__: {__name__}")
-if __name__ == "__app.app__":
+
+print (f"__name__ inside app.py: {__name__}")
+if __name__ == "__app__":
     print("Starting Flask application...")
     app.run(debug=True)
+    # unittest.main()
+
+# from app.models import routes

@@ -1,4 +1,4 @@
-from mailjet_rest import Client
+from mailjet_rest import Client#pip install mailjet-rest
 import os
 
 def send_mail(massage:str,recipiants:list[str]):

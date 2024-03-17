@@ -2,7 +2,6 @@ from flask import request, jsonify, Blueprint
 from datetime import datetime
 from ..models import Transaction, Container
 from ..config import logger
-import string
 import secrets
 from ..utils.weight import calc_containers_weights, calc_transaction_neto
 from ..database import db
@@ -63,6 +62,11 @@ def create_weight():
     logger.info("Received request to create a weight transaction")
 
     data = dict(request.json)
+    #! direction: no actual default
+    #! truck: if none in direction then 'na' (do we need to actually use 'na' outside of the response?)
+    #! containers: can be an empty string
+    #! weight is dependent on the direction
+    #! produce : default 'na' (do we even need the 'na'?)
     direction = data.get("direction")
     truck = data.get("truck", "na") # do i need to use the 'na' outside of the response?
     containers = data.get("containers", "")
@@ -139,8 +143,7 @@ def create_weight():
     date_time_now = datetime.now()
     new_transaction = None
     if direction == "in" or direction == "none":
-        alphabet = string.digits
-        session_id = ''.join(secrets.choice(alphabet) for _ in range(12))
+        session_id = secrets.randbelow(2147483647 - 1000000000) + 1000000000
         new_transaction = Transaction(datetime=date_time_now, bruto=int(weight), direction=direction,
                                       truck=truck, containers=containers, produce=produce,
                                       session_id=session_id)
@@ -153,8 +156,6 @@ def create_weight():
         containers_weight = calc_containers_weights(
             used_containers_weights, unit) if num_of_containers == len(used_containers_weights) else None
 
-        print(used_containers_weights)
-        print(containers_weight)
         neto = calc_transaction_neto(
             former_transaction.bruto, weight, containers_weight) if containers_weight else None
 

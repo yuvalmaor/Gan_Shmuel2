@@ -1,10 +1,6 @@
-from flask import request, jsonify, Blueprint
-from datetime import datetime
-
-from pymysql import NULL
-from ..models import Transaction, Container
+from flask import jsonify, Blueprint
+from ..models import Container
 from ..config import logger
-from ..database import db
 
 unknown_blueprint = Blueprint('unknown_blueprint', __name__)
 
@@ -17,12 +13,13 @@ def find_truck_or_container():
     try:
         unweighted_containers = Container.query.filter(Container.weight == None).all()
     except Exception as e:
+        logger.error("An error occurred while querying the database")
         return jsonify({"error": "An error occurred while querying the database: {}".format(str(e))}), 500
 
     logger.info("Returning Unweighted Containers IDs")
     
     # Collect the IDs of unweighted containers as strings
-    container_ids = [str(container.id) for container in unweighted_containers]
+    container_ids = [str(container.container_id) for container in unweighted_containers]
 
     
     return jsonify(container_ids), 200

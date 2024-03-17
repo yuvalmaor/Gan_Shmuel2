@@ -2,3 +2,7 @@ Flask
 Flask-SQLAlchemy
 PyMySQL[rsa]
 SQLAlchemy
+pandas
+requests
+openpyxl
+odfpy

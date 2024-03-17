@@ -1,14 +1,6 @@
+name: billing
 services:
-    app:
-      build: .
-      ports:
-      - "5000:5000"
-      networks:
-        - db-net
-      depends_on:
-        mysql: 
-          condition: service_healthy
-    mysql:
+  db:
       image: "mysql:8"
       command: --init-file /data/application/init.sql
       volumes:
@@ -23,5 +15,19 @@ services:
         interval: 3s
         retries: 5
         start_period: 30s
+  api:
+      image: billing:latest
+      ports:
+        8090:8090
+      networks:
+        - db-net
+      volumes:
+        - billing-logs:/billing-logs
+      depends_on:
+        db: 
+          condition: service_healthy
+volumes:
+  billing-logs:
+    external: true
 networks:
     db-net: 

@@ -8,22 +8,20 @@ services:
     environment:
       - MYSQL_RANDOM_ROOT_PASSWORD=yes
       - MYSQL_DATABASE=weight
-      - MYSQL_USER=${DATABASE_USER}
-      - MYSQL_PASSWORD=${DATABASE_PASSWORD}
+      - MYSQL_USER=flaskuser
+      - MYSQL_PASSWORD=1999
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       timeout: 10s
       retries: 10
   api:
-    build: 
-      dockerfile: Dockerfile
-    container_name: weight_microservice
+    image: weight:latest
     ports:
       - 8085:5000
     environment:
-      - DATABASE_NAME=${DATABASE_NAME}
-      - DATABASE_USER=${DATABASE_USER}
-      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=weight
+      - DATABASE_USER=flaskuser
+      - DATABASE_PASSWORD=1999
       - HOST=db
       - PORT=3306
     volumes:
@@ -35,3 +33,4 @@ services:
 volumes:
   weight-database:
   weight-logs:
+  external : true

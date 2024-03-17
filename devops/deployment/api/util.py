@@ -108,4 +108,4 @@ def build_docker_image(app:str, image_tag:str ="latest"):
 def deploy_docker_compose(folders):
     for folder in folders:
         gunicorn_logger.info(f"Deploying Docker Compose for {folder}...")
-        subprocess.run(["docker-compose", "-f", f"{folder}/docker-compose.yml", "up", "-d"], check=True)
+        subprocess.run(["docker-compose", "-f", f"/app/{folder}/docker-compose.yml", "up", "-d"], check=True)

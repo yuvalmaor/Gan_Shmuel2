@@ -2,8 +2,10 @@
 import urllib.request
 
 import git
-from api.util import (ServiceDown, containers_health, gunicorn_logger,
-                      repeating_task, task, SERVICES_PORT,build_docker_image)
+from api.util import (SERVICES_PORT, ServiceDown, build_docker_image,
+                      containers_health, deploy_docker_compose,
+                      gunicorn_logger, repeating_task, task)
+
 repo = git.cmd.Git("/app")
 @repeating_task(10)
 def monitor(port, service):
@@ -25,7 +27,8 @@ def deploy(branch:str):
    try:
       repo.pull()
       for service in SERVICES_PORT:
-         build_docker_image(service)    
+         build_docker_image(service)
+      deploy_docker_compose(SERVICES_PORT)  
    except:
       return False
 

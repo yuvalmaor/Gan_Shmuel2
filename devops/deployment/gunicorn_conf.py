@@ -6,7 +6,7 @@ from logging.handlers import TimedRotatingFileHandler
 bind = '0.0.0.0:' + environ.get('PORT', '8000')
 workers = 1
 
-wsgi_app="app:app"
+wsgi_app="app:create_app()"
 
 # log to stream
 accesslog = "-"  

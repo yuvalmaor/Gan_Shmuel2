@@ -7,17 +7,14 @@ from functools import wraps
 from threading import Thread
 from datetime import datetime
 
-
 import docker
-from config import DEFAULT_STATUS, SERVICES_PORT
+from api.config import DEFAULT_STATUS, SERVICES_PORT
 
 client = docker.from_env()
 scheduler = sched.scheduler(time.time, time.sleep)
 gunicorn_logger = logging.getLogger('gunicorn.error')
 con = sqlite3.connect("test.sqlite", check_same_thread=False)
 cur = con.cursor()
-
-
 class ServiceDown(Exception):
     pass
 
@@ -28,20 +25,20 @@ def repeating_task(interval: int):
     :param int interval: The interval in seconds
     """
     def decorator(func):
-        def periodic(scheduler, action, actionargs=()):
+        def periodic(scheduler:sched.scheduler, action, aargs:tuple=(),akwarg:dict={}):
             """Runs the function and than re-schedules 
             """
             scheduler.enter(interval, 1, periodic,
-                            (scheduler, action, actionargs))
+                            (scheduler, action, aargs,akwarg))
             try:
-                action(*actionargs)
+                action(*aargs,**akwarg)
             except Exception as exc:
                 scheduler.cancel(scheduler.queue[0])
                 gunicorn_logger.error(exc.args[0])
 
         def start_scheduler(func, *args, **kwargs):
             scheduler = sched.scheduler(time.time, time.sleep)
-            periodic(scheduler, func, args)
+            periodic(scheduler, func, args,kwargs)
             scheduler.run()
 
         @wraps(func)
@@ -53,7 +50,6 @@ def repeating_task(interval: int):
             return func_hl
         return wrap
     return decorator
-
 
 def task(f):
     @wraps(f)
@@ -67,7 +63,6 @@ def task(f):
         gunicorn_logger.info(f"[{task_id}]Task {f.__name__} finished.")
         return result
     return wrapper
-
 
 def init_db():
     cur.execute("""CREATE TABLE if not exists tasks(

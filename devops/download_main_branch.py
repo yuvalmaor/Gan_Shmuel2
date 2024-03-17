@@ -20,7 +20,7 @@ def download_main_branch():
     
     if response.status_code == 200:
         path = './devops/tmp/'
-        with open(f"}{path}{REPO_NAME}.tar.gz", "wb") as f:
+        with open(f"{path}{REPO_NAME}.tar.gz", "wb") as f:
             for chunk in response.iter_content(chunk_size=1024):
                 f.write(chunk)
 

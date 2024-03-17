@@ -1,9 +1,10 @@
 
 import urllib.request
 
+import git
 from api.util import (ServiceDown, containers_health, gunicorn_logger,
-                      repeating_task, task, SERVICES_PORT)
-
+                      repeating_task, task, SERVICES_PORT,build_docker_image)
+repo = git.cmd.Git("/app")
 @repeating_task(10)
 def monitor(port, service):
     """If not Successful responses urlopen will raise HTTPError"""
@@ -15,14 +16,18 @@ def monitor(port, service):
 def callback_task(a, *args, **kwargs):
    pass
 
-def git_pull():
-   """To be implemented"""
-   pass
+# def git_pull():
+#    """To be implemented"""
+#    pass
 
 @task
-def deploy():
-   """To be implemented"""
-   pass
+def deploy(branch:str):
+   try:
+      repo.pull()
+      for service in SERVICES_PORT:
+         build_docker_image(service)    
+   except:
+      return False
 
 def health_check():
     services = containers_health()

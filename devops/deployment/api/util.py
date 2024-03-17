@@ -3,6 +3,7 @@ import sched
 import logging
 import sqlite3
 from uuid import uuid4
+import subprocess
 from functools import wraps
 from threading import Thread
 from datetime import datetime
@@ -14,6 +15,7 @@ client = docker.from_env()
 gunicorn_logger = logging.getLogger('gunicorn.error')
 con = sqlite3.connect("test.sqlite", check_same_thread=False)
 cur = con.cursor()
+
 class ServiceDown(Exception):
     pass
 
@@ -76,3 +78,34 @@ def containers_health():
             services[container.labels["com.docker.compose.project"]].update(
                 {container.labels['com.docker.compose.service']:container.status})
     return services
+
+def build_docker_image(app:str, image_tag:str ="latest"):
+    client = docker.from_env()
+    image_tag = 'latest'
+
+    # Define the build parameters
+    build_params = {
+      'path': '/app/'+app,
+      'dockerfile': 'Dockerfile',  # Name of your Dockerfile
+      'tag': f'{app}:{image_tag}',  # Tag for your Docker image
+      'rm': True,  # Remove intermediate containers after a successful build
+    } 
+    try:
+        gunicorn_logger.info(f"Building Docker image '{image_tag}' from '{app}'")
+        client.build(**build_params) 
+      #   with client.build(**build_params) as response:
+      #       for line in response:
+      #           logger.info(line.decode('utf-8').strip())
+        gunicorn_logger.info("Build completed successfully.")
+        return True
+    except docker.errors.BuildError as e:
+        gunicorn_logger.error(f"Build failed: {e}")
+        raise e
+    except Exception as e:
+        gunicorn_logger.error(f"An error occurred during the build: {e}")
+        raise e 
+    
+def deploy_docker_compose(folders):
+    for folder in folders:
+        gunicorn_logger.info(f"Deploying Docker Compose for {folder}...")
+        subprocess.run(["docker-compose", "-f", f"{folder}/docker-compose.yml", "up", "-d"], check=True)

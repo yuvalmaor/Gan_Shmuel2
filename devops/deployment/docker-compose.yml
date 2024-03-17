@@ -5,5 +5,6 @@ services:
     restart: always
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - /app:/app
     ports:
-      - 8000:8080
+      - 8080:8000

@@ -63,11 +63,6 @@ def create_weight():
     logger.info("Received request to create a weight transaction")
 
     data = dict(request.json)
-    #! direction: no actual default
-    #! truck: if none in direction then 'na' (do we need to actually use 'na' outside of the response?)
-    #! containers: can be an empty string
-    #! weight is dependent on the direction
-    #! produce : default 'na' (do we even need the 'na'?)
     direction = data.get("direction")
     truck = data.get("truck", "na") # do i need to use the 'na' outside of the response?
     containers = data.get("containers", "")

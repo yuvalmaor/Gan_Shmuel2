@@ -1,0 +1,36 @@
+name: weight
+services:
+  db:
+    image: mysql:8.3
+    volumes:
+      - weight-database:/var/lib/mysql
+      - ./db:/docker-entrypoint-initdb.d
+    environment:
+      - MYSQL_RANDOM_ROOT_PASSWORD=yes
+      - MYSQL_DATABASE=weight
+      - MYSQL_USER=flaskuser
+      - MYSQL_PASSWORD=1999
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 10s
+      retries: 10
+  api:
+    image: weight:latest
+    ports:
+      - 8085:5000
+    environment:
+      - DATABASE_NAME=weight
+      - DATABASE_USER=flaskuser
+      - DATABASE_PASSWORD=1999
+      - HOST=db
+      - PORT=3306
+    volumes:
+      - ./in:/app/in
+      - weight-logs:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  weight-database:
+  weight-logs:
+    external: true

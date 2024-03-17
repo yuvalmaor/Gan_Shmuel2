@@ -1,0 +1,1 @@
+from .weight_schema import weight_schema

@@ -1,8 +1,5 @@
-from flask import Flask
 import requests
 import os
-
-app = Flask(__name__)
 
 REPO_OWNER = os.environ.get('REPO_OWNER')
 REPO_NAME = os.environ.get('REPO_NAME')

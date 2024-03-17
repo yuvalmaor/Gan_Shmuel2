@@ -40,51 +40,6 @@ def process_csv(file_path):
             containers = []
             for row in csv_reader:
                 container_id = row['id']
-                weight = None
-                unit = None
-
-                try:
-                    if 'kg' in row:
-                        weight = int(row['kg']) if row['kg'] else None
-                        unit = 'kg'
-                    elif 'lbs' in row:
-                        weight = int(row['lbs']) if row['lbs'] else None
-                        unit = 'lbs'
-
-                    if weight is None or unit is None:
-                        logger.info(f"Skipping container {container_id} due to missing weight or unit information.")
-                        continue
-
-                    container = Container(container_id=container_id, weight=weight, unit=unit)
-                    containers.append(container)
-                except ValueError as e:
-                    logger.error(f"Error processing container {container_id}: {e}")
-                    continue
-
-            if not containers:
-                logger.info("No valid containers found in the CSV file. Adding placeholder container.")
-                # Add a placeholder container with null values
-                placeholder_container = Container(container_id='N/A', weight=None, unit=None)
-                containers.append(placeholder_container)
-
-            db.session.add_all(containers)
-            db.session.commit()
-            return jsonify({'message': 'CSV processing completed successfully'}), 200
-    except FileNotFoundError:
-        logger.error(f"File not found: {file_path}")
-        return jsonify({'error': f'File not found: {file_path}'}), 404
-    except Exception as e:
-        logger.error(f"Error processing CSV file: {e}")
-        return jsonify({'error': f'Error processing CSV file: {e}'}), 500
-
-
-def process_csv(file_path):
-    try:
-        with open(file_path, 'r') as file:
-            csv_reader = csv.DictReader(file)
-            containers = []
-            for row in csv_reader:
-                container_id = row['id']
                 if not container_id:  # Check if container_id is empty
                     container_id = None
                 weight = row.get('kg') or row.get('lbs')
@@ -112,17 +67,14 @@ def process_json(file_path):
             containers = []
             for item in json_data:
                 container_id = item['id']
-            # Get weight and unit from the JSON item
-            weight = item.get('weight')
-            unit = item.get('unit')
+                weight = item.get('weight')
+                unit = item.get('unit')
             
-            # Check if the unit is valid (either 'kg' or 'lbs')
             if unit not in ['kg', 'lbs']:
                 logger.info(f"Invalid unit '{unit}' for container {container_id}. Setting unit to None.")
                 unit = None
             
-            # Convert empty string weight to None
-            if not weight:
+            elif not weight:
                 weight = None
 
                 container = Container(container_id=container_id, weight=weight, unit=unit)

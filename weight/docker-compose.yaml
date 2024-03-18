@@ -16,6 +16,7 @@ services:
       retries: 10
   api:
     image: weight:latest
+    build: .
     ports:
       - 8085:5000
     environment:

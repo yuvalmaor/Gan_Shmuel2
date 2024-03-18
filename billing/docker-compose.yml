@@ -1,0 +1,33 @@
+name: billing
+services:
+  db:
+      image: "mysql:8"
+      command: --init-file /data/application/init.sql
+      volumes:
+        - ./billingdb.sql:/data/application/init.sql
+      environment:
+        MYSQL_ROOT_PASSWORD: "1234"
+        MYSQL_DATABASE: "billdb"
+      networks:
+        - db-net
+      healthcheck:
+        test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 --password="1234" --silent']
+        interval: 3s
+        retries: 5
+        start_period: 30s
+  api:
+      image: billing:latest
+      ports:
+        8090:8090
+      networks:
+        - db-net
+      volumes:
+        - billing-logs:/billing-logs
+      depends_on:
+        db: 
+          condition: service_healthy
+volumes:
+  billing-logs:
+    external: true
+networks:
+    db-net: 

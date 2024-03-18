@@ -8,12 +8,19 @@ services:
       - billing-logs:/billing-logs
       - weight-logs:/weight-logs
       - logs:/logs
-      - /app:/app
+      - apps:/ci/apps
+    networks:
+      - api-net
     ports:
       - 8080:8000
 volumes:
+  apps:
   logs:
   billing-logs:
     external: true
   weight-logs:
+    external: true
+
+networks:
+  api-net:
     external: true

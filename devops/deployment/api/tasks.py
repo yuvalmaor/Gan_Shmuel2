@@ -1,4 +1,3 @@
-
 import urllib.request
 
 import git
@@ -6,7 +5,7 @@ from api.util import (SERVICES_PORT, ServiceDown, build_docker_image,
                       containers_health, deploy_docker_compose,
                       gunicorn_logger, repeating_task, task)
 
-repo = git.cmd.Git("/app")
+repo = git.cmd.Git("/ci/apps")
 @repeating_task(10)
 def monitor(service):
     """If not Successful responses urlopen will raise HTTPError"""
@@ -21,11 +20,13 @@ def callback_task(a, *args, **kwargs):
 @task
 def deploy(branch:str):
    try:
-      repo.pull()
+      e=repo.pull()
+      gunicorn_logger.info(e)
       build_docker_image(branch)
       deploy_docker_compose(branch)  
       monitor(branch)
-   except:
+   except Exception as exc:
+      gunicorn_logger.error(exc)
       return False
 
 def health_check():

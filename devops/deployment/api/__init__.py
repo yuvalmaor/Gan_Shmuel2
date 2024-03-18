@@ -1,4 +1,4 @@
-from flask import Flask,request,jsonify,g
+from flask import Flask,request,jsonify
 from swagger_ui import api_doc
 from multiprocessing import Pool
 from pathlib import Path
@@ -31,6 +31,7 @@ def create_app():
    def trigger():
       data=request.get_json()
       if data['action'] =='closed' and data['pull_request']['merged']:
+         # deploy(data['pull_request']['head']['ref'])
          results=pool.apply_async(
             deploy,kwds={'branch':data['pull_request']['head']['ref']})
       return "ok"

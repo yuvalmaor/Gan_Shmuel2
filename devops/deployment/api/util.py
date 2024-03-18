@@ -1,3 +1,4 @@
+import os
 import time
 import sched
 import logging
@@ -7,16 +8,21 @@ import subprocess
 from functools import wraps
 from threading import Thread
 from datetime import datetime
+from mailjet_rest import Client
 
 import docker
 from api.config import DEFAULT_STATUS, SERVICES_PORT
 
 client = docker.from_env()
+api_key=os.getenv("API_KEY")
+api_secret=os.getenv("API_SECRET")
 gunicorn_logger = logging.getLogger('gunicorn.error')
 scheduler = sched.scheduler(time.time, time.sleep)
 con = sqlite3.connect("/logs/tasks.sqlite", check_same_thread=False)
 cur = con.cursor()
 class ServiceDown(Exception):
+   pass
+class EmailException(Exception):
    pass
 
 def repeating_task(interval: int):
@@ -78,28 +84,37 @@ def build_docker_image(app:str, image_tag:str ="latest"):
    client = docker.from_env()
    image_tag = 'latest'
 
-   # Define the build parameters
-   build_params = {
-   'path': '/app/'+app,
-   'dockerfile': 'Dockerfile',  # Name of your Dockerfile
-   'tag': f'{app}:{image_tag}',  # Tag for your Docker image
-   'rm': True,  # Remove intermediate containers after a successful build
-   } 
-   try:
-      gunicorn_logger.info(f"Building Docker image '{image_tag}' from '{app}'")
-      client.build(**build_params) 
-   #   with client.build(**build_params) as response:
-   #       for line in response:
-   #           logger.info(line.decode('utf-8').strip())
-      gunicorn_logger.info("Build completed successfully.")
-      return True
-   except docker.errors.BuildError as e:
-      gunicorn_logger.error(f"Build failed: {e}")
-      raise e
-   except Exception as e:
-      gunicorn_logger.error(f"An error occurred during the build: {e}")
-      raise e 
+   path= '/ci/apps/'+app
+   dockerfile= './Dockerfile'  
+   tag= f'{app}:{image_tag}'
+   gunicorn_logger.info(f"Building Docker image '{image_tag}' from '{app}'")
+   client.images.build(path=path,dockerfile=dockerfile,tag=tag) 
+   gunicorn_logger.info("Build completed successfully.")
+   return True
     
 def deploy_docker_compose(service):
       gunicorn_logger.info(f"Deploying Docker Compose for {service}...")
-      subprocess.run(["docker-compose", "-f", f"/app/{service}/docker-compose.yml", "up", "-d"], check=True)
+      subprocess.run( ["docker-compose", "-f", f"/ci/apps/{service}/docker-compose.yml", "up", "-d"],check=True)
+
+def send_mail(massage:str,subject:str,recipiants:list[str]):
+   mailjet = Client(auth=(api_key, api_secret), version='v3.1')
+   data = {
+   'Messages': [
+      {
+      "From": {
+         "Email": "yuvalproject305@gmail.com",
+         "Name": "yuval"
+      },
+      "To": [ 
+         {
+         "Email": recipiant,
+         } for recipiant in recipiants ],
+      "Subject": subject,
+      "HTMLPart": "<h3>"+massage+"</h3>",
+      "CustomID": "AppGettingStartedTest"
+      }
+   ]
+   }
+   result = mailjet.send.create(data=data)
+   if result.status_code != 200:
+      raise EmailException("failed to send email")   

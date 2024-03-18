@@ -14,6 +14,7 @@ import docker
 from api.config import DEFAULT_STATUS, SERVICES_PORT
 
 client = docker.from_env()
+GIT_PATH = os.getenv("GIT_PATH")
 api_key=os.getenv("API_KEY")
 api_secret=os.getenv("API_SECRET")
 gunicorn_logger = logging.getLogger('gunicorn.error')
@@ -86,7 +87,7 @@ def build_docker_image(app:str, image_tag:str ="latest"):
 
    # Define the build parameters
 
-   path= '/ci/apps/'+app
+   path= os.path.join(GIT_PATH,app)
    dockerfile= './Dockerfile'  # Name of your Dockerfile
    tag= f'{app}:{image_tag}'  # Tag for your Docker image
 
@@ -97,7 +98,7 @@ def build_docker_image(app:str, image_tag:str ="latest"):
     
 def deploy_docker_compose(service):
       gunicorn_logger.info(f"Deploying Docker Compose for {service}...")
-      subprocess.run( ["docker-compose", "-f", f"/ci/apps/{service}/docker-compose.yml", "up", "-d"])
+      subprocess.run( ["docker-compose", "-f", f"{GIT_PATH}/{service}/docker-compose.yml", "up", "-d"])
       
 def send_mail(massage:str,subject:str,recipiants:list[str]):
    mailjet = Client(auth=(api_key, api_secret), version='v3.1')

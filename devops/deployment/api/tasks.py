@@ -4,9 +4,9 @@ import urllib.request
 import git
 from api.util import (SERVICES_PORT, ServiceDown, build_docker_image,
                       containers_health, deploy_docker_compose,
-                      gunicorn_logger, repeating_task, task)
+                      gunicorn_logger, repeating_task, task,GIT_PATH)
 
-repo = git.cmd.Git("/ci/apps")
+repo = git.cmd.Git(GIT_PATH)
 @repeating_task(10)
 def monitor(service):
     """If responses is not Successful urlopen will raise HTTPError"""
@@ -18,7 +18,11 @@ def monitor(service):
 # def callback_task(a, *args, **kwargs):
 #    pass
 
-def git_pull():
+def git_pull(branch:str):
+   # checkout branch
+   # GitPython
+   e=repo.pull()
+   gunicorn_logger.info(e)
    pass
 
 def image():
@@ -39,8 +43,8 @@ def production():
 @task
 def deploy(branch:str):
    try:
-      e=repo.pull()
-      gunicorn_logger.info(e)
+      git_pull()
+      
       build_docker_image(branch)
       deploy_docker_compose(branch)  
       monitor(branch)

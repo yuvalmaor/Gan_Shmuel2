@@ -1,7 +1,6 @@
 from app import db
 
 class Truck(db.Model):
-    __tablename__ = 'Trucks'  # Specify the table name explicitly to match the schema
+    __tablename__ = 'Trucks'
     id = db.Column(db.String(10), primary_key=True)
-    provider_id = db.Column(db.Integer, db.ForeignKey('provider.id'))
-    provider = db.relationship('Provider', backref='trucks')
+    provider_id = db.Column(db.Integer, db.ForeignKey('Provider.id'), nullable=True)

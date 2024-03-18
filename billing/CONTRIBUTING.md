@@ -75,6 +75,18 @@ Follow best practices for writing commit messages:
 - Keep subject lines concise and descriptive.
 - Include a detailed commit body if necessary.
 
+### Push and merge Guidelines
+- Before starting to change the code, pull the grand-truth branch,
+- From there checkout to your own branch.
+- Make the changes
+- Check that they are working properly (if it is a route, use postman and check that you get the desired values in the response. Until we use unit testing)
+- Then add and commit the changes to your remote branch.
+- Do a back merge with the branch that is the grand truth.
+- Handle conflicts and check that you didn't destroy anything in the grand truth branch.
+- If everything works as it should, again push the merge changes to your remote branch.
+- Make a pull request and ask to merge your current branch with the grand truth branch.
+
+
 ### Pull Request Process
 
 When submitting changes, follow these steps:

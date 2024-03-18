@@ -22,6 +22,7 @@ services:
         - 8090:8090
       networks:
         - db-net
+        - api-net
       volumes:
         - billing-logs:/billing-logs # should automatically 
       depends_on:
@@ -33,3 +34,6 @@ volumes:
      external: false
 networks:
     db-net: 
+      external: false
+    api-net:
+      external: true

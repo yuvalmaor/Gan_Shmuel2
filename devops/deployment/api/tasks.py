@@ -43,7 +43,7 @@ def production():
    pass
 
 @task
-def deploy(branch:str,head:str):
+def deploy(branch:str,merged:str):
    # branch the branch to deploy(main,billing,weight)
    # head the branch that was merged from(any branch)
    try:

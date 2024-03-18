@@ -34,7 +34,7 @@ def create_app():
       data['pull_request']['base']['ref'] in ('main','weight','billing')):
          results=pool.apply_async(
                deploy,kwds={'branch':data['pull_request']['base']['ref'],
-               'head':data['pull_request']['head']['ref']})         
+               'merged':data['pull_request']['head']['ref']})         
       return "ok"
    
    return app

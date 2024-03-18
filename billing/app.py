@@ -337,3 +337,60 @@ def download_new_rates():
 
     except Exception as e:
         return f"Error downloading file: {e}", 500
+
+
+# @app.route("/bill/<id>", methods=["GET"])
+# def get_bill(id):
+#     provider = Provider.query.get(id)
+#     if provider is None:
+#         return "wrong provider id", 400
+#     now = datetime.now()
+#     from_default = now.strftime("%Y%m") + "01000000"
+#     to_default = now.strftime("%Y%m%d%H%M%S")
+#     from_arg = request.args.get("from")
+#     if not from_arg:
+#         from_arg = from_default
+#     else:
+#         if len(from_arg) != 14:
+#             return "wrong datetime value"
+#         try:
+#             datetime(
+#                 from_arg[0:4],
+#                 from_arg[4:6],
+#                 from_arg[6:8],
+#                 from_arg[8:10],
+#                 from_arg[10:12],
+#                 from_arg[12:14],
+#             )
+#         except ValueError:
+#             return "wrong datetime value"
+#     to_arg = request.args.get("to")
+#     if not to_arg:
+#         to_arg = to_default
+#     else:
+#         if len(to_arg) != 14:
+#             return "wrong datetime value"
+#         try:
+#             datetime(
+#                 to_arg[0:4],
+#                 to_arg[4:6],
+#                 to_arg[6:8],
+#                 to_arg[8:10],
+#                 to_arg[10:12],
+#                 to_arg[12:14],
+#             )
+#         except ValueError:
+#             return "wrong datetime value"
+#     # get all trucks of provider id
+#     trucks = Truck.query.filter_by(provider_id=provider.id).all()
+#     truckCounter = 0
+#     sessionCounter = 0
+#     sessions = []
+#     for truck in trucks:
+#         truck_id = truck.truck_id
+#         WEIGHT__URI = f"http://{SERVER}:8084/"
+#         response = requests.get(
+#             WEIGHT_URI + f"/{truck_id}", params={"from": from_arg, "to": to_arg}
+#         )
+#         response.raise_for_status()
+#         truck_sessions = response.json()["sessions"]

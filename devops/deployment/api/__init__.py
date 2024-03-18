@@ -31,9 +31,9 @@ def create_app():
    def trigger():
       data=request.get_json()
       if data['action'] =='closed' and data['pull_request']['merged']:
-         # deploy(data['pull_request']['head']['ref'])
-         results=pool.apply_async(
-            deploy,kwds={'branch':data['pull_request']['head']['ref']})
+         if data['pull_request']['base']['ref']=='main':
+            results=pool.apply_async(
+               deploy,kwds={'branch':data['pull_request']['head']['ref']})
       return "ok"
    
    return app

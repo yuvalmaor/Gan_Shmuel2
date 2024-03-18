@@ -75,6 +75,62 @@ def deploy_docker_compose(service:str) -> None:
    gunicorn_logger.info(f"Deploying Docker Compose for {service}...")
    subprocess.run( ["docker-compose", "-f", f"{GIT_PATH}/{service}/docker-compose.yml", "up", "-d"])
 
+<<<<<<< HEAD
+=======
+# yuval
+def testing():
+   gunicorn_logger.info(f"Deploying Docker Compose for testing...")
+   subprocess.run( ["docker-compose", "-f", f"{GIT_PATH}/billing/test-docker-compose.yml", "up", "-d"])
+   subprocess.run( ["docker-compose", "-f", f"{GIT_PATH}/weight/test-docker-compose.yml", "up", "-d"])
+   #sleep?
+   # Define the command and directories as a list
+   command = ["pytest", "billing", "weight"]
+
+   # Run the command and capture the output and errors
+   result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+   # Check if the process had an error (non-zero exit code)
+   if result.returncode != 0:
+      print("Errors or failures occurred during the tests.")
+      print("Output:", result.stdout)
+      print("Errors:", result.stderr)
+      return False
+   else:
+      print("All tests passed successfully.")
+      return True
+      # to be implemented
+      # * test compose up 
+      # * run tests
+      # return bool
+   #pass
+# end yuval
+
+# gal 
+def production():
+   # rename image tag to latest
+   # compose up
+   pass
+
+@task
+def deploy(branch:str,merged:str,merged_commit:str) -> None:
+   """Performes the deployment process
+
+   :param branch: The branch to deploy
+   :type branch: str
+   :param merged: The merged branch
+   :type merged: str
+   :param merged_commit: The id of the commit that was merged
+   :type merged_commit: str
+   """
+   try:
+      git_pull(branch,merged_commit)
+      build_docker_image(branch)
+      deploy_docker_compose(branch)  
+      monitor(branch)
+   except Exception as exc:
+      gunicorn_logger.error(exc)
+
+>>>>>>> 6d077d29e33e16eb735d6376f8c7a4270652073d
 def send_mail(massage:str,subject:str,recipiants:list[str]):
    mailjet = Client(auth=(api_key, api_secret), version='v3.1')
    data = {

@@ -46,40 +46,14 @@ def get_trucks():
     return jsonify(truck_data)
 
 
-@app.route("/provider", methods=["POST"])
-def post_provider():
-    try:
-        # Get the new name from the request body
-        data = request.get_json()
-        name = data.get("name")
-
-        provider = Provider.query.filter_by(name=name).first()
-        logger.info(f"provider: {provider}")
-
-        # Check if name exists
-        if provider is None:
-            new_provider = Provider(name=name)  # Create new provider instance
-
-            # Add the new provider instance to the session
-            db.session.add(new_provider)
-
-            db.session.commit()
-            logger.info(f"New provider with ID {new_provider.id} created successfully.")
-
-            # Return a successful response with the new provider ID
-            return jsonify(
-                {"message": f"Provider created successfully. ID: {new_provider.id}"},
-                201,
-            )
-
-        # If name already exists, return appropriate error response
-        logger.warning(f"Name: {name} already exists")
-        return jsonify({"error": f"Provider name: {name} already exists"}), 409
-
-    except Exception as e:
-        logger.error(f"Error creating new provider: {e}")
-        db.session.rollback()  # Rollback changes in case of errors
-        return jsonify({"error": "Internal server error"}), 500
+@app.route("/provider")
+def get_providers():
+    logger.info("in provider")
+    providers = Provider.query.all()
+    provider_data = [
+        {"id": provider.id, "name": provider.name} for provider in providers
+    ]
+    return jsonify(provider_data)
 
 
 @app.route("/truck/<id>/", methods=["GET"])  # could be extended to other methods
@@ -121,20 +95,40 @@ providers = {}
 trucks = {}
 
 
-@app.route("/<provider>", methods=["POST"])
-def post_provider(provider):
-    # Check for unique name
-    if provider in providers:
-        return jsonify({"error": "Provider name already exists"}), 409
+@app.route("/provider", methods=["POST"])
+def post_provider():
+    try:
+        # Get the new name from the request body
+        data = request.get_json()
+        name = data.get("name")
 
-    # Generate unique ID
-    provider_id = uuid4().hex
+        provider = Provider.query.filter_by(name=name).first()
+        logger.info(f"provider: {provider}")
 
-    # Add provider to in-memory storage (replace with database write)
-    providers[provider] = provider_id
+        # Check if name exists
+        if provider is None:
+            new_provider = Provider(name=name)  # Create new provider instance
 
-    # Return created provider ID
-    return jsonify({"id": provider_id}), 201
+            # Add the new provider instance to the session
+            db.session.add(new_provider)
+
+            db.session.commit()
+            logger.info(f"New provider with ID {new_provider.id} created successfully.")
+
+            # Return a successful response with the new provider ID
+            return jsonify(
+                {"message": f"Provider created successfully. ID: {new_provider.id}"},
+                201,
+            )
+
+        # If name already exists, return appropriate error response
+        logger.warning(f"Name: {name} already exists")
+        return jsonify({"error": f"Provider name: {name} already exists"}), 409
+
+    except Exception as e:
+        logger.error(f"Error creating new provider: {e}")
+        db.session.rollback()  # Rollback changes in case of errors
+        return jsonify({"error": "Internal server error"}), 500
 
 
 @app.route("/provider/<string:provider_id>", methods=["PUT"])

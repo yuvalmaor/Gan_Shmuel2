@@ -36,4 +36,4 @@ networks:
     db-net: 
       external: false
     api-net:
-      external: true
+      external: false

@@ -128,33 +128,31 @@ def post_provider():
 # TODO: check these two functions work before uncommenting:
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-#PUT /provider/{id} can be used to update provider name  
+# PUT /provider/{id} can be used to update provider name
 @app.route("/provider/<provider_id>", methods=["PUT"])
 def update_provider(provider_id):
-    # Check if the provider exists in the dictionary using its GUID
-    
+    # Check if the provider exists in the database using its ID
     provider = Provider.query.get(provider_id)
-    if not provider:  
+    if not provider:
         return jsonify({"message": "Provider not found"}), 404
+    
     # Get the new name from the request body
     data = request.get_json()
     new_name = data.get("name")
 
-# Validate the new name
+    # Validate the new name
     if not new_name:
         return jsonify({"message": "No name provided"}), 400
-# Update the provider's name
+    
+    # Update the provider's name
     provider.name = new_name
+    
+    # Commit the changes to the database
+    db.session.commit()
 
-     # Return the updated provider info
-    return (
-        jsonify(
-            {
-                "message": "Provider updated successfully"
-            }
-        ),
-        200,
-    )
+    # Return the updated provider info
+    return jsonify({"message": "Provider updated successfully"}), 200
+
 
 # @app.route("/truck", methods=["POST"])
 # def register_truck():

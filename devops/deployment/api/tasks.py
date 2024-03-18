@@ -23,10 +23,7 @@ def monitor(service):
     except:
          raise ServiceDown(f"{service} is down")
 
-# def callback_task(a, *args, **kwargs):
-#    pass
-
-def git_pull(branch:str):
+def git_pull(branch:str) -> None:
    """Switchs to the specified branch and pulls 
    the changes
 
@@ -40,8 +37,7 @@ def git_pull(branch:str):
    
    gunicorn_logger.info(f"pull: {repo.pull()}")
 
-
-def build_docker_image(service:str, image_tag:str ="latest"):
+def build_docker_image(service:str, image_tag:str ="latest") -> None:
    """Builds the image for the specified service with 
    the requested tag
 
@@ -59,9 +55,14 @@ def build_docker_image(service:str, image_tag:str ="latest"):
    client.images.build(path=path,dockerfile=dockerfile,tag=tag) 
    gunicorn_logger.info("Build completed successfully.")
 
-def deploy_docker_compose(service):
-      gunicorn_logger.info(f"Deploying Docker Compose for {service}...")
-      subprocess.run( ["docker-compose", "-f", f"{GIT_PATH}/{service}/docker-compose.yml", "up", "-d"])
+def deploy_docker_compose(service:str) -> None:
+   """Runs docker-compose for the specified service
+
+   :param service: The service name
+   :type service: str
+   """
+   gunicorn_logger.info(f"Deploying Docker Compose for {service}...")
+   subprocess.run( ["docker-compose", "-f", f"{GIT_PATH}/{service}/docker-compose.yml", "up", "-d"])
 
 # yuval
 def testing():
@@ -92,7 +93,12 @@ def deploy(branch:str,merged:str):
       return False
 # end gal 
 
-def health_check():
+def health_check() -> dict:
+   """Performs service health check
+
+   :return: A dictionary with the services status
+   :rtype: dict
+   """
    services = containers_health()
    for name in services:
       try:

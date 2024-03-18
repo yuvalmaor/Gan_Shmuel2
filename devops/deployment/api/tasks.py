@@ -33,14 +33,14 @@ def deploy(branch:str):
       return False
 
 def health_check():
-    services = containers_health()
-    for name in services:
-        try:
-            urllib.request.urlopen(
-                f"http://localhost:{SERVICES_PORT[name]}/health", timeout=5)
-        except:
-            services['name']['api'] = 'down'
-    return services
+   services = containers_health()
+   for name in services:
+      try:
+         urllib.request.urlopen(
+               f"http://localhost:{SERVICES_PORT[name]}/health", timeout=5)
+      except:
+         services[name]['api'] = 'down'
+   return services
 
 
 if __name__ == '__main__':

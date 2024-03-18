@@ -27,6 +27,7 @@
       "get": {
         "responses": {
           "200": {
+            "description": "status",
             "content": {
               "application/json": {
                 "schema": {

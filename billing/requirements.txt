@@ -2,7 +2,9 @@ Flask
 Flask-SQLAlchemy
 PyMySQL[rsa]
 SQLAlchemy
+pytest-flask
 pandas
 requests
 openpyxl
 odfpy
+

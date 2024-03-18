@@ -3,10 +3,9 @@ import os
 from uuid import uuid4
 from flask import Flask, jsonify, render_template, redirect, request, send_file, url_for
 from flask_sqlalchemy import SQLAlchemy
-
 from . import db, app, logger
-
 from app.models import Truck, Rate, Provider
+import requests
 # from models import Provider, Rate, Truck
 
 
@@ -14,31 +13,10 @@ from app.models import Truck, Rate, Provider
 
 logger.info('Initializing Flask app')
 
-
-# Define SQLAlchemy models
-# class Provider(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     name = db.Column(db.String(255))
-
-# class Rate(db.Model):
-#     __tablename__ = 'Rates'  # Specify the table name explicitly to match the schema
-#     product_id = db.Column(db.String(50), primary_key=True)
-#     rate = db.Column(db.Integer, default=0)
-#     scope = db.Column(db.String(50), db.ForeignKey('provider.id'))
-#     provider = db.relationship('Provider', backref='rates')
-
-# class Truck(db.Model):
-#     __tablename__ = 'Trucks'  # Specify the table name explicitly to match the schema
-#     id = db.Column(db.String(10), primary_key=True)
-#     provider_id = db.Column(db.Integer, db.ForeignKey('provider.id'))
-#     provider = db.relationship('Provider', backref='trucks')
-
-
 @app.route("/")
 def home():
     print("home function")
     return "Hellooooo"
-
 
 @app.route("/health")
 def healthcheck():
@@ -56,40 +34,48 @@ def get_trucks():
     return jsonify(truck_data)
 
 
-@app.route("/truck/<id>/", methods=['GET']) # could be extended to other methods
+weightAdress:str = "weight-api-1" # TODO: move to env.
+@app.route("/truck/<id>/", methods=['GET'])
 def truckREST(id):
-    logger.info(f"in /truck/<id>/:")
-    trucks = Truck.query.all()
+    logger.info(f"Received GET request for truck with ID: {id}")
+
     truck = Truck.query.filter_by(id=id).first()
+
     # Check if the truck exists
     if truck is None:
         logger.warning(f"Truck with ID {id} not found")
         return jsonify({"error": f"Truck with ID {id} not found"}), 404
 
-      # Set default t1 and t2
+    # Set default t1 and t2
     t1_default = "01000000"  # 1st of month at 00:00:00
     t2_default = "now"  # Assuming "now" means the current time
 
     t1 = request.args.get("from", t1_default)
     t2 = request.args.get("to", t2_default)
 
-     # Here you may want to convert t1 and t2 to proper datetime objects
-    # For simplicity, let's just print them for now
-    print("t1:", t1)
-    print("t2:", t2)
+    logger.info(f"Received 'from' parameter: {t1}, 'to' parameter: {t2}")
 
+    # Define the URL for the third-party API
+    url = f"{weightAdress}/item/{id}?from={t1}&to={t2}"
 
-    truck_data = {
-        "id": truck.id,
-        "provider_id": truck.provider_id
-        # "tara": trucks[id]["tara"], 
-        # "sessions": trucks[id]["sessions"]
-    }
+    logger.info(f"Making GET request to: {url}")
 
+    # Make the GET request to the third-party API
+    response = requests.get(url)
+    if response.status_code == 404:
+        logger.warning(f"Truck data not found for ID: {id}")
+        return jsonify({"error": f"Truck with ID {id} not found"}), 404
+    elif response.status_code != 200:
+        logger.error(f"Failed to retrieve truck data for ID: {id}. Status code: {response.status_code}")
+        return jsonify({"error": "Failed to retrieve truck data"}), response.status_code
 
-    logger.info(f"Found trucksies: {truck_data}")
-    # Return json
+    truck_data = response.json()
+
+    logger.info(f"Received truck data: {truck_data}")
+
     return jsonify(truck_data), 200
+
+
 
 # In-memory storage for simplicity (replace with database later)
 providers = {}

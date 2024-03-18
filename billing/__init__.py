@@ -14,5 +14,5 @@ logger.info('Initializing Flask app')
 app = Flask(__name__)
 
 logger.info('Intializing mySQL app:')
-app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://root:1234@mysql/billdb"  # Note the database name change to 'billdb'
+app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://root:1234@db/billdb"  # Note the database name change to 'billdb'
 db = SQLAlchemy(app)

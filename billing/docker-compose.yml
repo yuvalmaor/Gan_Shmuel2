@@ -3,6 +3,8 @@ services:
       build: .
       ports:
       - "5000:5000"
+      volumes:
+        - ./rates_files:/app/rates_files
       networks:
         - db-net
       depends_on:

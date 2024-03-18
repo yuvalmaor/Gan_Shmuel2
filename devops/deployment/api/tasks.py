@@ -22,8 +22,8 @@ def monitor(service):
 def git_pull(branch:str):
    # checkout branch
    # GitPython
-   e=repo.pull()
-   gunicorn_logger.info(e)
+   gunicorn_logger.info(f"checkout: {repo.checkout(branch)}")
+   gunicorn_logger.info(f"pull: {repo.pull()}")
    pass
 
 def build_docker_image(app:str, image_tag:str ="latest"):

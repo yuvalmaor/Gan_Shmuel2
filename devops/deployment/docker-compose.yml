@@ -7,11 +7,13 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - billing-logs:/billing-logs
       - weight-logs:/weight-logs
-      - devops-logs:/logs
+      - logs:/logs
       - /app:/app
     ports:
       - 8080:8000
 volumes:
+  logs:
   billing-logs:
+    external: true
   weight-logs:
-  devops-logs:
+    external: true

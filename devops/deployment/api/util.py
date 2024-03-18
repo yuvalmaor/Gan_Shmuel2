@@ -13,15 +13,14 @@ from api.config import DEFAULT_STATUS, SERVICES_PORT
 
 client = docker.from_env()
 gunicorn_logger = logging.getLogger('gunicorn.error')
-con = sqlite3.connect("tasks.sqlite", check_same_thread=False)
+scheduler = sched.scheduler(time.time, time.sleep)
+con = sqlite3.connect("/logs/tasks.sqlite", check_same_thread=False)
 cur = con.cursor()
-
 class ServiceDown(Exception):
    pass
 
 def repeating_task(interval: int):
-   """Decorator for repeating a tasks and running
-    in a separate thread
+   """Decorator for repeating a tasks
 
     :param int interval: The interval in seconds
     """
@@ -29,46 +28,41 @@ def repeating_task(interval: int):
       def periodic(scheduler:sched.scheduler, action, aargs:tuple=(),akwarg:dict={}):
          """Runs the function and than re-schedules 
          """
-         scheduler.enter(interval, 1, periodic,
+         s=scheduler.enter(interval, 1, periodic,
                         (scheduler, action, aargs,akwarg))
          try:
                action(*aargs,**akwarg)
          except Exception as exc:
-            scheduler.cancel(scheduler.queue[0])
+            scheduler.cancel(s)
             gunicorn_logger.error(exc.args[0])
-
-      def start_scheduler(func, *args, **kwargs):
-         scheduler = sched.scheduler(time.time, time.sleep)
-         periodic(scheduler, func, args,kwargs)
-         scheduler.run()
 
       @wraps(func)
       def wrap(*args, **kwargs):
-         func_hl = Thread(target=start_scheduler,
-                        args=(func, *args), kwargs=kwargs)
-         func_hl.start()
-         return func_hl
+         periodic(scheduler, func, args,kwargs)
       return wrap
    return decorator
 
 def task(f):
    @wraps(f)
-   def wrapper(*args, **kwds):
+   def wrapper(*args, **kwargs):
       task_id = uuid4()
-      cur.execute("INSERT INTO tasks VALUES(?, ?, ?)",
-                  (str(task_id), f.__name__, datetime.today()))
+      cur.execute("INSERT INTO tasks VALUES(?, ?, ? ,?)",
+                  (str(task_id), f.__name__, "{}".format(str(kwargs)[1:-1]),datetime.today()))
       con.commit()
       gunicorn_logger.info(f"[{task_id}]Task {f.__name__} started.")
-      result = f(*args, **kwds)
+      result = f(*args, **kwargs)
       gunicorn_logger.info(f"[{task_id}]Task {f.__name__} finished.")
       return result
    return wrapper
 
-def init_db():
+def init_monitor_db():
    cur.execute("""CREATE TABLE if not exists tasks(
    id TEXT PRIMARY KEY,
    name TEXT,
+   additional_info TEXT,
    created_at datetime DEFAULT CURRENT_TIMESTAMP)""")
+   t=Thread(target=scheduler.run,args=())
+   t.start()
 
 def containers_health():
    services=DEFAULT_STATUS.copy()
@@ -106,7 +100,6 @@ def build_docker_image(app:str, image_tag:str ="latest"):
       gunicorn_logger.error(f"An error occurred during the build: {e}")
       raise e 
     
-def deploy_docker_compose(folders):
-   for folder in folders:
-      gunicorn_logger.info(f"Deploying Docker Compose for {folder}...")
-      subprocess.run(["docker-compose", "-f", f"/app/{folder}/docker-compose.yml", "up", "-d"], check=True)
+def deploy_docker_compose(service):
+      gunicorn_logger.info(f"Deploying Docker Compose for {service}...")
+      subprocess.run(["docker-compose", "-f", f"/app/{service}/docker-compose.yml", "up", "-d"], check=True)

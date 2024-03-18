@@ -8,27 +8,23 @@ from api.util import (SERVICES_PORT, ServiceDown, build_docker_image,
 
 repo = git.cmd.Git("/app")
 @repeating_task(10)
-def monitor(port, service):
+def monitor(service):
     """If not Successful responses urlopen will raise HTTPError"""
     try:
-         urllib.request.urlopen(f"http://localhost:{port}/health", timeout=5)
+         urllib.request.urlopen(f"http://localhost:{SERVICES_PORT[service]}/health", timeout=5)
     except:
          raise ServiceDown(f"{service} is down")
 
 def callback_task(a, *args, **kwargs):
    pass
 
-# def git_pull():
-#    """To be implemented"""
-#    pass
-
 @task
 def deploy(branch:str):
    try:
       repo.pull()
-      for service in SERVICES_PORT:
-         build_docker_image(service)
-      deploy_docker_compose(SERVICES_PORT)  
+      build_docker_image(branch)
+      deploy_docker_compose(branch)  
+      monitor(branch)
    except:
       return False
 
@@ -41,7 +37,6 @@ def health_check():
       except:
          services[name]['api'] = 'down'
    return services
-
 
 if __name__ == '__main__':
     print(health_check())

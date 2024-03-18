@@ -27,23 +27,25 @@ def git_pull(branch:str):
 
 def image():
    pass
-
+# yuval
 def testing():
    # to be implemented
    # * test compose up 
    # * run tests
    # return bool
    pass
+# end yuval
 
+# gal 
 def production():
    # rename image tag to latest
    # compose up
    pass
 
 @task
-def deploy(base:str,head:str):
-   # base the branch to deploy(main,billing,weight)
-   # head the branch that it was merged from(any branch)
+def deploy(branch:str,head:str):
+   # branch the branch to deploy(main,billing,weight)
+   # head the branch that was merged from(any branch)
    try:
       git_pull()
       build_docker_image(branch)
@@ -52,6 +54,7 @@ def deploy(base:str,head:str):
    except:
       gunicorn_logger.error('error')
       return False
+# end gal 
 
 def health_check():
    services = containers_health()

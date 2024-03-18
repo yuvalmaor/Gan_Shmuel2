@@ -33,7 +33,7 @@ def create_app():
       if all(data['action'] =='closed',data['pull_request']['merged'], 
       data['pull_request']['base']['ref'] in ('main','weight','billing')):
          results=pool.apply_async(
-               deploy,kwds={'base':data['pull_request']['base']['ref'],
+               deploy,kwds={'branch':data['pull_request']['base']['ref'],
                'head':data['pull_request']['head']['ref']})         
       return "ok"
    

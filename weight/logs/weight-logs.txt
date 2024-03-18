@@ -1,0 +1,34 @@
+2024-03-18 09:23:34,602 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.0.0.33:5000
+2024-03-18 09:23:34,602 - INFO - [33mPress CTRL+C to quit[0m
+2024-03-18 09:30:59,147 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.0.0.33:5000
+2024-03-18 09:30:59,147 - INFO - [33mPress CTRL+C to quit[0m
+2024-03-18 09:31:21,909 - ERROR - Error processing CSV file in/containers1.csv: (pymysql.err.OperationalError) (2003, "Can't connect to MySQL server on 'localhost' ([Errno 111] Connection refused)")
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2024-03-18 09:31:21,909 - INFO - 127.0.0.1 - - [18/Mar/2024 09:31:21] "POST /batch HTTP/1.1" 200 -
+2024-03-18 09:38:27,145 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.0.0.33:5000
+2024-03-18 09:38:27,145 - INFO - [33mPress CTRL+C to quit[0m
+2024-03-18 09:38:50,712 - ERROR - Error processing CSV file in/containers1.csv: (pymysql.err.OperationalError) (2003, "Can't connect to MySQL server on 'localhost' ([Errno 111] Connection refused)")
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2024-03-18 09:38:50,712 - INFO - 127.0.0.1 - - [18/Mar/2024 09:38:50] "POST /batch HTTP/1.1" 200 -
+2024-03-18 09:50:13,510 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.0.0.33:5000
+2024-03-18 09:50:13,510 - INFO - [33mPress CTRL+C to quit[0m
+2024-03-18 09:50:51,584 - ERROR - Error processing CSV file in/containers1.csv: (pymysql.err.OperationalError) (2003, "Can't connect to MySQL server on 'localhost' ([Errno 111] Connection refused)")
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2024-03-18 09:50:51,584 - INFO - 127.0.0.1 - - [18/Mar/2024 09:50:51] "POST /batch HTTP/1.1" 200 -
+2024-03-18 09:55:18,560 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.0.0.33:5000
+2024-03-18 09:55:18,560 - INFO - [33mPress CTRL+C to quit[0m

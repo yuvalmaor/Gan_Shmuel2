@@ -5,6 +5,8 @@ from ..config import logger
 import secrets
 from ..utils.weight import calc_containers_weights, calc_transaction_neto
 from ..database import db
+from jsonschema import Draft7Validator
+from ..schemas import weight_schema
 
 weight_blueprint = Blueprint('weight_blueprint', __name__)
 
@@ -61,7 +63,15 @@ def get_weights():
 def create_weight():
     logger.info("Received request to create a weight transaction")
 
-    data = dict(request.json)
+    data = request.get_json()
+    
+    validator = Draft7Validator(weight_schema)
+    errors = sorted(validator.iter_errors(instance=data), key=lambda e: e.path)
+    
+    if errors:
+        error_messages = [error.message for error in errors]
+        # Return the first error message or all of them as you prefer
+        return jsonify({"errors": error_messages}), 400
     #! direction: no actual default
     #! truck: if none in direction then 'na' (do we need to actually use 'na' outside of the response?)
     #! containers: can be an empty string

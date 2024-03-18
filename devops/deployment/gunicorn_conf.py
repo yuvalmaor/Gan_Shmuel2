@@ -26,7 +26,7 @@ logconfig_dict={
             'level': 'INFO',
             "class": "logging.handlers.TimedRotatingFileHandler",
             'formatter': 'customFormatter',
-            "filename":"test.log",
+            "filename":"/app/api.log",
             "when": "midnight",
             "backupCount": 2,
             'interval': 1

@@ -4,9 +4,15 @@ import subprocess
 import urllib.request
 
 import git
+from mailjet_rest import Client
 from api.util import (GIT_PATH, SERVICES_PORT, ServiceDown, client,
                       containers_health, gunicorn_logger, repeating_task, task)
 
+
+api_key=os.getenv("API_KEY")
+api_secret=os.getenv("API_SECRET")
+
+#: Class for performing git commands on local git repo
 repo = git.cmd.Git(GIT_PATH)
 
 class EmailException(Exception):
@@ -23,19 +29,24 @@ def monitor(service):
     except:
          raise ServiceDown(f"{service} is down")
 
-def git_pull(branch:str) -> None:
+def git_pull(branch:str,merged_commit:str) -> str:
    """Switchs to the specified branch and pulls 
    the changes
 
    :param branch: The brance that needs to be updated
    :type branch: str
+   :param merged_commit: The id of the commit that was merged
+   :type merged_commit: str
    :raises GitException: When git fails to switch branchs
+   :return: The email of the person that performed the merge
+   :rtype: str
    """
    gunicorn_logger.info(f"checkout: {repo.checkout(branch)}")
    if not repo.branch("--show-current") == branch:
       raise GitException(f"Failed to checkout branch: {branch}")
    
    gunicorn_logger.info(f"pull: {repo.pull()}")
+   return repo.log(f"--format='%ae'", f"{merged_commit}^!")
 
 def build_docker_image(service:str, image_tag:str ="latest") -> None:
    """Builds the image for the specified service with 
@@ -80,18 +91,47 @@ def production():
    pass
 
 @task
-def deploy(branch:str,merged:str):
-   # branch the branch to deploy(main,billing,weight)
-   # head the branch that was merged from(any branch)
+def deploy(branch:str,merged:str,merged_commit:str) -> None:
+   """Performes the deployment process
+
+   :param branch: The branch to deploy
+   :type branch: str
+   :param merged: The merged branch
+   :type merged: str
+   :param merged_commit: The id of the commit that was merged
+   :type merged_commit: str
+   """
    try:
-      git_pull()
+      git_pull(branch,merged_commit)
       build_docker_image(branch)
       deploy_docker_compose(branch)  
       monitor(branch)
    except Exception as exc:
       gunicorn_logger.error(exc)
-      return False
-# end gal 
+
+def send_mail(massage:str,subject:str,recipiants:list[str]):
+   mailjet = Client(auth=(api_key, api_secret), version='v3.1')
+   data = {
+   'Messages': [
+      {
+      "From": {
+         "Email": "yuvalproject305@gmail.com",
+         "Name": "yuval"
+      },
+      "To": [ 
+         {
+         "Email": recipiant,
+         } for recipiant in recipiants ],
+      "Subject": subject,
+      "HTMLPart": "<h3>"+massage+"</h3>",
+      "CustomID": "AppGettingStartedTest"
+      }
+   ]
+   }
+   result = mailjet.send.create(data=data)
+   if result.status_code != 200:
+      raise EmailException("Failed to send email")   
+
 
 def health_check() -> dict:
    """Performs service health check

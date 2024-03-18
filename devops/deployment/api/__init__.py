@@ -44,12 +44,15 @@ def create_app():
 
       """
       data=request.get_json()
+
       branch=data['pull_request']['base']['ref']
       merged_from=data['pull_request']['head']['ref']
-      if all(data['action'] =='closed',data['pull_request']['merged'], 
-             branch in ('main','weight','billing')):
+      merged_commit=data['pull_request']['head']['sha']
+
+      if all((data['action'] =='closed',data['pull_request']['merged'], 
+             branch in ('main','weight','billing'))):
          results=pool.apply_async(
-               deploy,kwds={'branch':branch,'merged':merged_from})         
+               deploy,kwds={'branch':branch,'merged':merged_from,'merged_commit':merged_commit})         
       return "ok"
    
    return app

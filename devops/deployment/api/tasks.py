@@ -8,6 +8,13 @@ from api.util import (GIT_PATH, SERVICES_PORT, ServiceDown, client,
                       containers_health, gunicorn_logger, repeating_task, task)
 
 repo = git.cmd.Git(GIT_PATH)
+
+class EmailException(Exception):
+   pass
+
+class GitException(Exception):
+   pass
+
 @repeating_task(10)
 def monitor(service):
     """If responses is not Successful urlopen will raise HTTPError"""
@@ -20,11 +27,20 @@ def monitor(service):
 #    pass
 
 def git_pull(branch:str):
-   # checkout branch
-   # GitPython
+   """Switchs to the specified branch and pulls 
+   the changes
+
+   :param branch: The brance that needs to be updated
+   :type branch: str
+   :raises GitException: when git fails to switch branchs
+   """
    gunicorn_logger.info(f"checkout: {repo.checkout(branch)}")
+   if not repo.branch("--show-current") == branch:
+      raise GitException(f"Failed to checkout branch: {branch}")
+   
    gunicorn_logger.info(f"pull: {repo.pull()}")
-   pass
+   
+
 
 def build_docker_image(app:str, image_tag:str ="latest"):
 

@@ -15,7 +15,25 @@ def monitor(service):
     except:
          raise ServiceDown(f"{service} is down")
 
-def callback_task(a, *args, **kwargs):
+# def callback_task(a, *args, **kwargs):
+#    pass
+
+def git_pull():
+   pass
+
+def image():
+   pass
+
+def testing():
+   # to be implemented
+   # * test compose up 
+   # * run tests
+   # return bool
+   pass
+
+def production():
+   # rename image tag to latest
+   # compose up
    pass
 
 @task

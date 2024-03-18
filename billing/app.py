@@ -18,12 +18,15 @@ from . import db, app, logger
 from app.utilities.app_utility import add_rates_to_rates_db, delete_prev_rates_file
 from app.models import Truck, Rate, Provider
 import requests
+
 # from models import Provider, Rate, Truck
+
 
 @app.route("/")
 def home():
     print("home function")
     return "Hellooooo"
+
 
 @app.route("/health")
 def healthcheck():
@@ -40,8 +43,75 @@ def get_trucks():
     ]
     return jsonify(truck_data)
 
-weightAdress:str = "weight-api-1" # TODO: move to env.
-@app.route("/truck/<id>/", methods=['GET'])
+
+# @app.route("/bill/<id>", methods=["GET"])
+# def get_bill(id):
+#     provider = Provider.query.get(id)
+
+#     if provider is None:
+#         return "wrong provider id", 400
+
+#     now = datetime.now()
+#     from_default = now.strftime("%Y%m") + "01000000"
+#     to_default = now.strftime("%Y%m%d%H%M%S")
+
+#     from_arg = request.args.get("from")
+#     if not from_arg:
+#         from_arg = from_default
+
+#     else:
+#         if len(from_arg) != 14:
+#             return "wrong datetime value"
+#         try:
+#             datetime(
+#                 from_arg[0:4],
+#                 from_arg[4:6],
+#                 from_arg[6:8],
+#                 from_arg[8:10],
+#                 from_arg[10:12],
+#                 from_arg[12:14],
+#             )
+#         except ValueError:
+#             return "wrong datetime value"
+
+#     to_arg = request.args.get("to")
+#     if not to_arg:
+#         to_arg = to_default
+#     else:
+#         if len(to_arg) != 14:
+#             return "wrong datetime value"
+#         try:
+#             datetime(
+#                 to_arg[0:4],
+#                 to_arg[4:6],
+#                 to_arg[6:8],
+#                 to_arg[8:10],
+#                 to_arg[10:12],
+#                 to_arg[12:14],
+#             )
+#         except ValueError:
+#             return "wrong datetime value"
+#     # get all trucks of provider id
+#     trucks = Truck.query.filter_by(provider_id=provider.id).all()
+
+#     truckCounter = 0
+#     sessionCounter = 0
+#     sessions = []
+#     for truck in trucks:
+#         truck_id = truck.truck_id
+#         SERVER = 'localhost'
+#         WEIGHT_URI = f"http://{SERVER}:8084/"
+#         response = requests.get(
+#             WEIGHT_URI + f"/{truck_id}", params={"from": from_arg, "to": to_arg}
+#         )
+#         response.raise_for_status()
+#         truck_sessions = response.json()["sessions"]
+
+
+weightAdress: str = "weight-api-1"  # TODO: move to env.
+
+
+@app.route("/truck/<id>/", methods=["GET"])
 def truckREST(id):
     logger.info(f"Received GET request for truck with ID: {id}")
 
@@ -61,7 +131,6 @@ def truckREST(id):
 
     logger.info(f"Received 'from' parameter: {t1}, 'to' parameter: {t2}")
 
-
     # Define the URL for the third-party API
     url = f"{weightAdress}/item/{id}?from={t1}&to={t2}"
 
@@ -72,12 +141,15 @@ def truckREST(id):
         logger.warning(f"Truck data not found for ID: {id}")
         return jsonify({"error": f"Truck with ID {id} not found"}), 404
     elif response.status_code != 200:
-        logger.error(f"Failed to retrieve truck data for ID: {id}. Status code: {response.status_code}")
+        logger.error(
+            f"Failed to retrieve truck data for ID: {id}. Status code: {response.status_code}"
+        )
         return jsonify({"error": "Failed to retrieve truck data"}), response.status_code
 
     truck_data = response.json()
     logger.info(f"Received truck data: {truck_data}")
     return jsonify(truck_data), 200
+
 
 # TODO: check if can combine with same route
 @app.route("/provider")
@@ -93,9 +165,11 @@ def get_providers():
 @app.route("/provider", methods=["POST"])
 def post_provider():
     try:
-        # Get the new name from the request body
-        data = request.get_json()
-        name = data.get("name")
+        try:
+            # Get the new name from the request body
+            name = request.get_json().get("name")
+        except (TypeError, KeyError):
+            return 'Bad parameters, expected {"name":"<name>"}\n', 400
 
         provider = Provider.query.filter_by(name=name).first()
         logger.info(f"provider: {provider}")
@@ -106,8 +180,10 @@ def post_provider():
 
             # Add the new provider instance to the session
             db.session.add(new_provider)
-
             db.session.commit()
+
+            new_provider = Provider.query.filter_by(name=name).first()
+
             logger.info(f"New provider with ID {new_provider.id} created successfully.")
 
             # Return a successful response with the new provider ID
@@ -125,9 +201,10 @@ def post_provider():
         db.session.rollback()  # Rollback changes in case of errors
         return jsonify({"error": "Internal server error"}), 500
 
+
 # TODO: check these two functions work before uncommenting:
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
+
 # @app.route("/provider/<string:provider_id>", methods=["PUT"])
 # def update_provider(provider_id):
 #     # Check if the provider exists in the dictionary using its GUID
@@ -177,7 +254,7 @@ def post_provider():
 #         jsonify({"message": "Truck registered successfully", "truckId": truck_id}),
 #         201,
 #     )
-    
+
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -267,6 +344,3 @@ def download_new_rates():
 
     except Exception as e:
         return f"Error downloading file: {e}", 500
-
-
-

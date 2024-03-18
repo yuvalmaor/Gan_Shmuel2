@@ -9,7 +9,7 @@ from api.util import (SERVICES_PORT, ServiceDown, build_docker_image,
 repo = git.cmd.Git("/ci/apps")
 @repeating_task(10)
 def monitor(service):
-    """If not Successful responses urlopen will raise HTTPError"""
+    """If responses is not Successful urlopen will raise HTTPError"""
     try:
          urllib.request.urlopen(f"http://ec2-13-200-131-223.ap-south-1.compute.amazonaws.com:{SERVICES_PORT[service]}/health", timeout=10)
     except:

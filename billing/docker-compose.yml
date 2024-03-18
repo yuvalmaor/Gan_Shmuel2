@@ -16,20 +16,23 @@ services:
         retries: 5
         start_period: 30s
   api:
-      # image: billing:latest # TODO: on production
-      build: .
+      image: billing:latest 
       ports:
         - 8090:5000
       networks:
         - db-net
+        - api-net
       volumes:
-        - billing-logs:/billing-logs # should automatically 
+        - ./rates_files:/app/rates_files
+        - billing-logs:/billing-logs # should automatically
       depends_on:
-        db: 
+        db:
           condition: service_healthy
 volumes:
   billing-logs:
-#    external: true
-     external: false
+    external: true
 networks:
-    db-net: 
+    db-net:
+      external: true
+    api-net:
+      external: true

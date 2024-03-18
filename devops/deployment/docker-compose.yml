@@ -5,6 +5,13 @@ services:
     restart: always
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - billing-logs:/billing-logs
+      - weight-logs:/weight-logs
+      - devops-logs:/logs
       - /app:/app
     ports:
       - 8080:8000
+volumes:
+  billing-logs:
+  weight-logs:
+  devops-logs:

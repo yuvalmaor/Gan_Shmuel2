@@ -75,8 +75,6 @@ def deploy_docker_compose(service:str) -> None:
    gunicorn_logger.info(f"Deploying Docker Compose for {service}...")
    subprocess.run( ["docker-compose", "-f", f"{GIT_PATH}/{service}/docker-compose.yml", "up", "-d"])
 
-<<<<<<< HEAD
-=======
 # yuval
 def testing():
    gunicorn_logger.info(f"Deploying Docker Compose for testing...")
@@ -103,6 +101,7 @@ def testing():
       # * run tests
       # return bool
    #pass
+   
 # end yuval
 
 # gal 
@@ -111,26 +110,6 @@ def production():
    # compose up
    pass
 
-@task
-def deploy(branch:str,merged:str,merged_commit:str) -> None:
-   """Performes the deployment process
-
-   :param branch: The branch to deploy
-   :type branch: str
-   :param merged: The merged branch
-   :type merged: str
-   :param merged_commit: The id of the commit that was merged
-   :type merged_commit: str
-   """
-   try:
-      git_pull(branch,merged_commit)
-      build_docker_image(branch)
-      deploy_docker_compose(branch)  
-      monitor(branch)
-   except Exception as exc:
-      gunicorn_logger.error(exc)
-
->>>>>>> 6d077d29e33e16eb735d6376f8c7a4270652073d
 def send_mail(massage:str,subject:str,recipiants:list[str]):
    mailjet = Client(auth=(api_key, api_secret), version='v3.1')
    data = {
@@ -153,21 +132,6 @@ def send_mail(massage:str,subject:str,recipiants:list[str]):
    result = mailjet.send.create(data=data)
    if result.status_code != 200:
       raise EmailException("Failed to send email")   
-
-# yuval
-def testing():
-   # to be implemented
-   # * test compose up 
-   # * run tests
-   # return bool
-   pass
-# end yuval
-
-# gal 
-def production():
-   # rename image tag to latest
-   # compose up
-   pass
 
 def health_check() -> dict:
    """Performs service health check

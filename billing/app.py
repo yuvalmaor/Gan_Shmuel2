@@ -1,14 +1,14 @@
 from datetime import datetime
 import os
 from uuid import uuid4
-from flask import Flask, jsonify, render_template, redirect, request, send_file, url_for
+from flask import Flask, jsonify, render_template, redirect, request, send_file, url_for, send_file
 from flask_sqlalchemy import SQLAlchemy
+import pandas as pd
 
 from . import db, app, logger
 
 from app.models import Truck, Rate, Provider
-# from models import Provider, Rate, Truck
-
+from app.utilities.app_utility import add_rates_to_rates_db, delete_prev_rates_file
 
 #from models.truck import Truck
 
@@ -54,6 +54,13 @@ def get_trucks():
     trucks = Truck.query.all()
     truck_data = [{"id": truck.id, "provider_id": truck.provider_id} for truck in trucks]
     return jsonify(truck_data)
+
+@app.route("/provider")
+def get_providers():
+    logger.info("in provider")
+    providers = Provider.query.all()
+    provider_data = [{"id": provider.id, "name": provider.name} for provider in providers]
+    return jsonify(provider_data)
 
 
 @app.route("/truck/<id>/", methods=['GET']) # could be extended to other methods
@@ -153,9 +160,87 @@ def register_truck():
     return jsonify({'message': 'Truck registered successfully', 'truckId': truck_id}), 201
 
 
+
+
+@app.route('/rates', methods=['POST'])
+def upload_new_rates():
+    # Check if the request contains the file field
+    if 'file' not in request.form:
+        return 'No file path provided in the request', 400
+
+    file_path = os.path.join('/app/rates_files', request.form['file'])
+
+    try:
+        df = pd.read_excel(file_path)
+
+        # Check if the required columns are present
+        required_columns = ['Product', 'Rate', 'Scope']
+        if not set(required_columns).issubset(df.columns):
+            return f"Missing required columns: {', '.join(required_columns)}", 400
+
+        # Create a list to store updates
+        updates = []
+
+        # Iterate over rows and collect updates
+        for index, row in df.iterrows():
+            product_id = row['Product']
+            rate = row['Rate']
+            scope = row['Scope']
+
+            if scope == 'All':
+                provider_id = scope
+
+            elif isinstance(int(scope), int):
+                provider_id = scope
+                provider = Provider.query.get(provider_id)
+                if provider is None:
+                    return f"Provider with id {provider_id} does not exist. File was not saved, No changes were made to the database", 400
+                provider_id = provider.id 
+            else:
+                return "Invalid value for 'Scope'. It should be 'ALL' or a provider id. File was not saved, no change to db", 400
+
+            # Collect updates
+            updates.append({'product_id': product_id, 'rate': rate, 'scope': provider_id})
+
+        add_rates_to_rates_db(updates)
+
+        in_directory = '/app/in'
+        delete_prev_rates_file(in_directory)
+
+        # Save the new file in the /in directory
+        df.to_excel(os.path.join(in_directory, 'rates.xlsx'), index=False)
+
+        return 'Rates uploaded successfully', 200
+
+    except Exception as e:
+        db.session.rollback()
+        return f'Error reading or saving Excel file: {e}. No changes were made to the database', 400
+
+
+@app.route('/rates', methods=['GET'])
+def download_new_rates():
+    try:
+
+        # Path to the file to be downloaded
+        file_path = '/app/in/rates.xlsx'
+
+        # Check if the file exists
+        if not os.path.exists(file_path):
+            return 'No rates file uploded yet', 404
+
+        # Send the file for download
+        return send_file(file_path, as_attachment=True)
+        
+    except Exception as e:
+        return f'Error downloading file: {e}', 500
+
+
+
+
+
 # from app.models import routes
 
-#     return 'Message posted successfully'
+#  return 'Message posted successfully'
 print("test if being ran")
 print (f"__name__: {__name__}")
 if __name__ == "__app.app__":

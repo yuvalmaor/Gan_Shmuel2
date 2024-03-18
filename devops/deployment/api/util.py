@@ -7,15 +7,14 @@ from uuid import uuid4
 from functools import wraps
 from threading import Thread
 from datetime import datetime
-from mailjet_rest import Client
+
 
 import docker
 from api.config import DEFAULT_STATUS, SERVICES_PORT
 
 client = docker.from_env()
 GIT_PATH = os.getenv("GIT_PATH")
-api_key=os.getenv("API_KEY")
-api_secret=os.getenv("API_SECRET")
+
 gunicorn_logger = logging.getLogger('gunicorn.error')
 scheduler = sched.scheduler(time.time, time.sleep)
 con = sqlite3.connect("/logs/tasks.sqlite", check_same_thread=False)
@@ -80,27 +79,3 @@ def containers_health():
             services[container.labels["com.docker.compose.project"]].update(
                {container.labels['com.docker.compose.service']:container.status})
    return services
-
-      
-def send_mail(massage:str,subject:str,recipiants:list[str]):
-   mailjet = Client(auth=(api_key, api_secret), version='v3.1')
-   data = {
-   'Messages': [
-      {
-      "From": {
-         "Email": "yuvalproject305@gmail.com",
-         "Name": "yuval"
-      },
-      "To": [ 
-         {
-         "Email": recipiant,
-         } for recipiant in recipiants ],
-      "Subject": subject,
-      "HTMLPart": "<h3>"+massage+"</h3>",
-      "CustomID": "AppGettingStartedTest"
-      }
-   ]
-   }
-   result = mailjet.send.create(data=data)
-   if result.status_code != 200:
-      raise EmailException("failed to send email")   

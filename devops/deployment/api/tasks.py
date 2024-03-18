@@ -10,7 +10,6 @@ from api.util import (GIT_PATH, SERVICES_PORT, ServiceDown, client,
 repo = git.cmd.Git(GIT_PATH)
 
 class EmailException(Exception):
-   
    pass
 
 class GitException(Exception):

@@ -1,3 +1,4 @@
+
 import urllib.request
 
 import git
@@ -10,7 +11,7 @@ repo = git.cmd.Git("/ci/apps")
 def monitor(service):
     """If not Successful responses urlopen will raise HTTPError"""
     try:
-         urllib.request.urlopen(f"http://localhost:{SERVICES_PORT[service]}/health", timeout=5)
+         urllib.request.urlopen(f"http://ec2-13-200-131-223.ap-south-1.compute.amazonaws.com:{SERVICES_PORT[service]}/health", timeout=10)
     except:
          raise ServiceDown(f"{service} is down")
 
@@ -25,8 +26,8 @@ def deploy(branch:str):
       build_docker_image(branch)
       deploy_docker_compose(branch)  
       monitor(branch)
-   except Exception as exc:
-      gunicorn_logger.error(exc)
+   except:
+      gunicorn_logger.error('error')
       return False
 
 def health_check():
@@ -34,7 +35,7 @@ def health_check():
    for name in services:
       try:
          urllib.request.urlopen(
-               f"http://localhost:{SERVICES_PORT[name]}/health", timeout=5)
+               f"http://ec2-13-200-131-223.ap-south-1.compute.amazonaws.com:{SERVICES_PORT[name]}/health", timeout=10)
       except:
          services[name]['api'] = 'down'
    return services

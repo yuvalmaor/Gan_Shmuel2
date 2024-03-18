@@ -75,18 +75,21 @@ def containers_health():
    container_list=client.containers.list(all=True)
    if container_list:
       for container in container_list:
-         if "devops" not in container.name:
-               services[container.labels["com.docker.compose.project"]].update(
-                  {container.labels['com.docker.compose.service']:container.status})
+         if "billing" in container.name or "weight" in container.name:
+            services[container.labels["com.docker.compose.project"]].update(
+               {container.labels['com.docker.compose.service']:container.status})
    return services
 
 def build_docker_image(app:str, image_tag:str ="latest"):
    client = docker.from_env()
    image_tag = 'latest'
 
+   # Define the build parameters
+
    path= '/ci/apps/'+app
-   dockerfile= './Dockerfile'  
-   tag= f'{app}:{image_tag}'
+   dockerfile= './Dockerfile'  # Name of your Dockerfile
+   tag= f'{app}:{image_tag}'  # Tag for your Docker image
+
    gunicorn_logger.info(f"Building Docker image '{image_tag}' from '{app}'")
    client.images.build(path=path,dockerfile=dockerfile,tag=tag) 
    gunicorn_logger.info("Build completed successfully.")
@@ -94,8 +97,8 @@ def build_docker_image(app:str, image_tag:str ="latest"):
     
 def deploy_docker_compose(service):
       gunicorn_logger.info(f"Deploying Docker Compose for {service}...")
-      subprocess.run( ["docker-compose", "-f", f"/ci/apps/{service}/docker-compose.yml", "up", "-d"],check=True)
-
+      subprocess.run( ["docker-compose", "-f", f"/ci/apps/{service}/docker-compose.yml", "up", "-d"])
+      
 def send_mail(massage:str,subject:str,recipiants:list[str]):
    mailjet = Client(auth=(api_key, api_secret), version='v3.1')
    data = {

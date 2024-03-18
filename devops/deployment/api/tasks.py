@@ -66,11 +66,30 @@ def deploy_docker_compose(service:str) -> None:
 
 # yuval
 def testing():
-   # to be implemented
-   # * test compose up 
-   # * run tests
-   # return bool
-   pass
+   gunicorn_logger.info(f"Deploying Docker Compose for testing...")
+   subprocess.run( ["docker-compose", "-f", f"{GIT_PATH}/billing/test-docker-compose.yml", "up", "-d"])
+   subprocess.run( ["docker-compose", "-f", f"{GIT_PATH}/weight/test-docker-compose.yml", "up", "-d"])
+   #sleep?
+   # Define the command and directories as a list
+   command = ["pytest", "billing", "weight"]
+
+   # Run the command and capture the output and errors
+   result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+   # Check if the process had an error (non-zero exit code)
+   if result.returncode != 0:
+      print("Errors or failures occurred during the tests.")
+      print("Output:", result.stdout)
+      print("Errors:", result.stderr)
+      return False
+   else:
+      print("All tests passed successfully.")
+      return True
+      # to be implemented
+      # * test compose up 
+      # * run tests
+      # return bool
+   #pass
 # end yuval
 
 # gal 

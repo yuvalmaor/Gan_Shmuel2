@@ -21,7 +21,7 @@ def add_rates_to_rates_db(updates):
                     provider_id = provider.id
 
             # Update or create rate in the database
-            existing_rate = Rate.query.filter_by(product_id=product_id, scope=provider_id)
+            existing_rate = Rate.query.filter_by(product_id=product_id, scope=provider_id).first()
             if existing_rate:
                 existing_rate.rate = rate
             elif existing_rate and (not scope == "ALL"):

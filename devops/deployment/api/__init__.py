@@ -30,15 +30,11 @@ def create_app():
    @app.post("/trigger")
    def trigger():
       data=request.get_json()
-      if data['action'] =='closed' and data['pull_request']['merged']:
-         # add testing
-         # if Successful
-         if data['pull_request']['base']['ref']=='main':
-            results=pool.apply_async(
-               deploy,kwds={'branch':data['pull_request']['head']['ref']})
-         # send email
-         
-
+      if all(data['action'] =='closed',data['pull_request']['merged'], 
+      data['pull_request']['base']['ref'] in ('main','weight','billing')):
+         results=pool.apply_async(
+               deploy,kwds={'base':data['pull_request']['base']['ref'],
+               'head':data['pull_request']['head']['ref']})         
       return "ok"
    
    return app

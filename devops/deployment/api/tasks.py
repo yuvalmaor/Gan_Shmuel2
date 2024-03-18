@@ -41,10 +41,11 @@ def production():
    pass
 
 @task
-def deploy(branch:str):
+def deploy(base:str,head:str):
+   # base the branch to deploy(main,billing,weight)
+   # head the branch that it was merged from(any branch)
    try:
       git_pull()
-      
       build_docker_image(branch)
       deploy_docker_compose(branch)  
       monitor(branch)

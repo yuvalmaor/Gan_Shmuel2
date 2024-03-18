@@ -38,7 +38,7 @@ def send_mail(massage:str,recipiants:list[str]):
       print(result.status_code)
       print(result.json())
    except:
-        print("mail error")
+      print("mail error")
 
 
 def get_keys():

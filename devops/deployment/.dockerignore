@@ -1,0 +1,9 @@
+.git
+.backup
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.gitignore
+.venv
+*.sqlite

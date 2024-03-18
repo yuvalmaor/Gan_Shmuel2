@@ -15,21 +15,15 @@ from flask import (
 from flask_sqlalchemy import SQLAlchemy
 import pandas as pd
 from . import db, app, logger
-from app.models import Truck, Rate, Provider
 from app.utilities.app_utility import add_rates_to_rates_db, delete_prev_rates_file
-
-
-# from models.truck import Truck
-
-logger.info("Initializing Flask app")
-
-
+from app.models import Truck, Rate, Provider
+import requests
+# from models import Provider, Rate, Truck
 
 @app.route("/")
 def home():
     print("home function")
     return "Hellooooo"
-
 
 @app.route("/health")
 def healthcheck():
@@ -46,7 +40,46 @@ def get_trucks():
     ]
     return jsonify(truck_data)
 
+weightAdress:str = "weight-api-1" # TODO: move to env.
+@app.route("/truck/<id>/", methods=['GET'])
+def truckREST(id):
+    logger.info(f"Received GET request for truck with ID: {id}")
 
+    truck = Truck.query.filter_by(id=id).first()
+
+    # Check if the truck exists
+    if truck is None:
+        logger.warning(f"Truck with ID {id} not found")
+        return jsonify({"error": f"Truck with ID {id} not found"}), 404
+
+    # Set default t1 and t2
+    t1_default = "01000000"  # 1st of month at 00:00:00
+    t2_default = "now"  # Assuming "now" means the current time
+
+    t1 = request.args.get("from", t1_default)
+    t2 = request.args.get("to", t2_default)
+
+    logger.info(f"Received 'from' parameter: {t1}, 'to' parameter: {t2}")
+
+
+    # Define the URL for the third-party API
+    url = f"{weightAdress}/item/{id}?from={t1}&to={t2}"
+
+    logger.info(f"Making GET request to: {url}")
+    # Make the GET request to the third-party API
+    response = requests.get(url)
+    if response.status_code == 404:
+        logger.warning(f"Truck data not found for ID: {id}")
+        return jsonify({"error": f"Truck with ID {id} not found"}), 404
+    elif response.status_code != 200:
+        logger.error(f"Failed to retrieve truck data for ID: {id}. Status code: {response.status_code}")
+        return jsonify({"error": "Failed to retrieve truck data"}), response.status_code
+
+    truck_data = response.json()
+    logger.info(f"Received truck data: {truck_data}")
+    return jsonify(truck_data), 200
+
+# TODO: check if can combine with same route
 @app.route("/provider")
 def get_providers():
     logger.info("in provider")
@@ -55,57 +88,6 @@ def get_providers():
         {"id": provider.id, "name": provider.name} for provider in providers
     ]
     return jsonify(provider_data)
-
-
-@app.route("/truck/<id>/", methods=["GET"])  # could be extended to other methods
-def truckREST(id):
-    try:
-        logger.info(f"in truckREST: {truckREST}")
-        # trucks = Truck.query.all()
-        truck: int = Truck.query.filter_by(id=id).first()
-        # Check if the truck exists
-        if truck is None:
-            logger.warning(f"Truck with ID {id} not found")
-            return jsonify({"error": f"Truck with ID {id} not found"}), 404
-
-
-        # Set default t1 and t2
-        t1_default: str = "01000000"  # 1st of month at 00:00:00
-        t2_default: str = "now"  # Assuming "now" means the current time
-
-
-        t1: str = request.args.get("from", t1_default)
-        t2: str = request.args.get("to", t2_default)
-
-        # Here you may want to convert t1 and t2 to proper datetime objects
-        # For simplicity, let's just print them for now
-
-        logger.info(f"after setting default - t1: {t1}, t2: {t2}")
-
-        # Make the GET request to the third-party API
-        url = f"https://weight2/item/{id}?from={t1}&to={t2}"
-        response = requests.get(url)
-
-        if response.status_code == 404:
-            return jsonify({"error": f"Truck with ID {id} not found"}), 404
-        elif response.status_code != 200:
-            return jsonify({"error": "Failed to retrieve truck data"}), response.status_code
-        truck_data: dict[str,str] = response.json()
-        logger.info(f"Found truck_data: {truck_data}")
-    
-        # Return json
-        return jsonify(truck_data), 200
-    # TODO: check connectivity before or after
-
-    except Exception as e:
-        logger.error(f"An exception occurred: {e}")
-        return e.status_code
-
-
-
-# In-memory storage for simplicity (replace with database later)
-providers = {}
-trucks = {}
 
 
 @app.route("/provider", methods=["POST"])
@@ -143,65 +125,66 @@ def post_provider():
         db.session.rollback()  # Rollback changes in case of errors
         return jsonify({"error": "Internal server error"}), 500
 
+# TODO: check these two functions work before uncommenting:
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+# @app.route("/provider/<string:provider_id>", methods=["PUT"])
+# def update_provider(provider_id):
+#     # Check if the provider exists in the dictionary using its GUID
+#     if provider_id not in providers:
+#         return jsonify({"message": "Provider not found"}), 404
 
-@app.route("/provider/<string:provider_id>", methods=["PUT"])
-def update_provider(provider_id):
-    # Check if the provider exists in the dictionary using its GUID
-    if provider_id not in providers:
-        return jsonify({"message": "Provider not found"}), 404
+#     # Get the new name from the request body
+#     data = request.get_json()
+#     new_name = data.get("name")
 
-    # Get the new name from the request body
-    data = request.get_json()
-    new_name = data.get("name")
+#     # Validate the new name
+#     if not new_name:
+#         return jsonify({"message": "No name provided"}), 400
 
-    # Validate the new name
-    if not new_name:
-        return jsonify({"message": "No name provided"}), 400
+#     # Update the provider's name
+#     providers[provider_id]["name"] = new_name
 
-    # Update the provider's name
-    providers[provider_id]["name"] = new_name
+#     # Return the updated provider info
+#     return (
+#         jsonify(
+#             {
+#                 "message": "Provider updated successfully",
+#                 "provider": providers[provider_id],
+#             }
+#         ),
+#         200,
+#     )
 
-    # Return the updated provider info
-    return (
-        jsonify(
-            {
-                "message": "Provider updated successfully",
-                "provider": providers[provider_id],
-            }
-        ),
-        200,
-    )
+# @app.route("/truck", methods=["POST"])
+# def register_truck():
+#     data = request.get_json()
+#     provider_id = data.get("provider")
+#     truck_id = data.get("id")  # Assuming truck ID is the license plate
+#     if not provider_id or not truck_id:
+#         return (
+#             jsonify(
+#                 {"message": "Both provider ID and truck license plate must be provided"}
+#             ),
+#             400,
+#         )
+#     if provider_id not in providers:
+#         return jsonify({"message": "Provider ID does not exist"}), 404
+#     if truck_id in trucks:
+#         return jsonify({"message": "Truck ID must be unique"}), 400
+#     trucks[truck_id] = {"provider": provider_id}
+#     return (
+#         jsonify({"message": "Truck registered successfully", "truckId": truck_id}),
+#         201,
+#     )
+    
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 # POST /truck
 # registers a truck in the system
 # - provider - known provider id
 # - id - the truck license plate
-
-
-@app.route("/truck", methods=["POST"])
-def register_truck():
-    data = request.get_json()
-    provider_id = data.get("provider")
-    truck_id = data.get("id")  # Assuming truck ID is the license plate
-    if not provider_id or not truck_id:
-        return (
-            jsonify(
-                {"message": "Both provider ID and truck license plate must be provided"}
-            ),
-            400,
-        )
-    if provider_id not in providers:
-        return jsonify({"message": "Provider ID does not exist"}), 404
-    if truck_id in trucks:
-        return jsonify({"message": "Truck ID must be unique"}), 400
-    trucks[truck_id] = {"provider": provider_id}
-    return (
-        jsonify({"message": "Truck registered successfully", "truckId": truck_id}),
-        201,
-    )
-
-
 @app.route("/rates", methods=["POST"])
 def upload_new_rates():
     # Check if the request contains the file field
@@ -286,8 +269,4 @@ def download_new_rates():
         return f"Error downloading file: {e}", 500
 
 
-
-
-#  return 'Message posted successfully'
-print("test if being ran")
 

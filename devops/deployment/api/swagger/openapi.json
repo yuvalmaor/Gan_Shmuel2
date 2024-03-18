@@ -1,0 +1,105 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "DevOps Team 2 API",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000"
+    },
+    {
+      "url": "http://ec2-13-200-131-223.ap-south-1.compute.amazonaws.com:8080"
+    }
+  ],
+  "tags": [
+    {
+      "name": "health",
+      "description": "Returns the status of all services"
+    },
+    {
+      "name": "trigger",
+      "description": "Route for GitHub webhook"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Services"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/trigger": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "type": "object"
+                  },
+                  "pusher": {
+                    "type": "object"
+                  },
+                  "repository": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "trigger"
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Services": {
+        "type": "object",
+        "properties": {
+          "billing": {
+            "$ref": "#/components/schemas/Service"
+          },
+          "weight": {
+            "$ref": "#/components/schemas/Service"
+          }
+        }
+      },
+      "Service": {
+        "type": "object",
+        "properties": {
+          "api": {
+            "type": "string",
+            "example": "running"
+          },
+          "database": {
+            "type": "string",
+            "example": "running"
+          }
+        }
+      }
+    }
+  }
+}

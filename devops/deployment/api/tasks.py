@@ -13,6 +13,7 @@ class EmailException(Exception):
    pass
 
 class GitException(Exception):
+   
    pass
 
 @repeating_task(10)

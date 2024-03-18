@@ -11,33 +11,32 @@ def send_mail(massage:str,sub:str,recipiants:list[str]):
    """
    #print(get_keys())
    #keys=get_keys()
-   try:
-      api_key=os.getenv("api_key")
+   
+   api_key=os.getenv("api_key")
 
-      api_secret=os.getenv("api_secret")
-      mailjet = Client(auth=(api_key, api_secret), version='v3.1')
-      data = {
-      'Messages': [
+   api_secret=os.getenv("api_secret")
+   mailjet = Client(auth=(api_key, api_secret), version='v3.1')
+   data = {
+   'Messages': [
+      {
+      "From": {
+         "Email": "yuvalproject305@gmail.com",
+         "Name": "yuval"
+      },
+      "To": [ 
          {
-         "From": {
-            "Email": "yuvalproject305@gmail.com",
-            "Name": "yuval"
-         },
-         "To": [ 
-            {
-            "Email": recipiant,
-            } for recipiant in recipiants ],
-         "Subject": sub,
-         "HTMLPart": "<h3>"+massage+"</h3>",
-         "CustomID": "AppGettingStartedTest"
-         }
-      ]
+         "Email": recipiant,
+         } for recipiant in recipiants ],
+      "Subject": sub,
+      "HTMLPart": "<h3>"+massage+"</h3>",
+      "CustomID": "AppGettingStartedTest"
       }
-      result = mailjet.send.create(data=data)
-      print(result.status_code)
-      print(result.json())
-   except:
-      print("mail error")
+   ]
+   }
+   result = mailjet.send.create(data=data)
+   print(result.status_code)
+   print(result.json())
+   
 
 
 def get_keys():

@@ -4,34 +4,14 @@ from uuid import uuid4
 from flask import Flask, jsonify, render_template, redirect, request, send_file, url_for
 from flask_sqlalchemy import SQLAlchemy
 
-from . import db, app, logger
+from billing import db, app, logger
 
-from app.models import Truck, Rate, Provider
-# from models import Provider, Rate, Truck
+from models import Provider, Rate, Truck
 
 
 #from models.truck import Truck
 
 logger.info('Initializing Flask app')
-
-
-# Define SQLAlchemy models
-# class Provider(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     name = db.Column(db.String(255))
-
-# class Rate(db.Model):
-#     __tablename__ = 'Rates'  # Specify the table name explicitly to match the schema
-#     product_id = db.Column(db.String(50), primary_key=True)
-#     rate = db.Column(db.Integer, default=0)
-#     scope = db.Column(db.String(50), db.ForeignKey('provider.id'))
-#     provider = db.relationship('Provider', backref='rates')
-
-# class Truck(db.Model):
-#     __tablename__ = 'Trucks'  # Specify the table name explicitly to match the schema
-#     id = db.Column(db.String(10), primary_key=True)
-#     provider_id = db.Column(db.Integer, db.ForeignKey('provider.id'))
-#     provider = db.relationship('Provider', backref='trucks')
 
 
 @app.route("/")
@@ -42,10 +22,8 @@ def home():
 
 @app.route("/health")
 def healthcheck():
-    
     status = {"status": "ok", "message": "Service is healthy"}
     return jsonify(status), 200
-
 
 
 @app.route("/trucks")
@@ -66,14 +44,14 @@ def truckREST(id):
         logger.warning(f"Truck with ID {id} not found")
         return jsonify({"error": f"Truck with ID {id} not found"}), 404
 
-      # Set default t1 and t2
+    # Set default t1 and t2
     t1_default = "01000000"  # 1st of month at 00:00:00
     t2_default = "now"  # Assuming "now" means the current time
 
     t1 = request.args.get("from", t1_default)
     t2 = request.args.get("to", t2_default)
 
-     # Here you may want to convert t1 and t2 to proper datetime objects
+    # Here you may want to convert t1 and t2 to proper datetime objects
     # For simplicity, let's just print them for now
     print("t1:", t1)
     print("t2:", t2)

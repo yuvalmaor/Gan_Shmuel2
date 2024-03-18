@@ -82,7 +82,7 @@ def testing():
    subprocess.run( ["docker-compose", "-f", f"{GIT_PATH}/weight/test-docker-compose.yml", "up", "-d"])
    #sleep?
    # Define the command and directories as a list
-   command = ["pytest", "billing", "weight"]
+   command = ["pytest", "{GIT_PATH}/billing", "{GIT_PATH}/weight"]
 
    # Run the command and capture the output and errors
    result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -101,7 +101,6 @@ def testing():
       # * run tests
       # return bool
    #pass
-   
 # end yuval
 
 # gal 
@@ -109,6 +108,25 @@ def production():
    # rename image tag to latest
    # compose up
    pass
+
+@task
+def deploy(branch:str,merged:str,merged_commit:str) -> None:
+   """Performes the deployment process
+
+   :param branch: The branch to deploy
+   :type branch: str
+   :param merged: The merged branch
+   :type merged: str
+   :param merged_commit: The id of the commit that was merged
+   :type merged_commit: str
+   """
+   try:
+      git_pull(branch,merged_commit)
+      build_docker_image(branch)
+      deploy_docker_compose(branch)  
+      monitor(branch)
+   except Exception as exc:
+      gunicorn_logger.error(exc)
 
 def send_mail(massage:str,subject:str,recipiants:list[str]):
    mailjet = Client(auth=(api_key, api_secret), version='v3.1')
@@ -133,6 +151,7 @@ def send_mail(massage:str,subject:str,recipiants:list[str]):
    if result.status_code != 200:
       raise EmailException("Failed to send email")   
 
+
 def health_check() -> dict:
    """Performs service health check
 
@@ -147,25 +166,6 @@ def health_check() -> dict:
       except:
          services[name]['api'] = 'down'
    return services
-
-@task
-def deploy(branch:str,merged:str,merged_commit:str) -> None:
-   """Performes the deployment process
-
-   :param branch: The branch to deploy
-   :type branch: str
-   :param merged: The merged branch
-   :type merged: str
-   :param merged_commit: The id of the commit that was merged
-   :type merged_commit: str
-   """
-   try:
-      git_pull(branch,merged_commit)
-      build_docker_image(branch)
-      deploy_docker_compose(branch)  
-      monitor(branch)
-   except Exception as exc:
-      gunicorn_logger.error(exc)
 
 if __name__ == '__main__':
     print(health_check())

@@ -19,7 +19,7 @@ services:
       # image: billing:latest # TODO: on production
       build: .
       ports:
-        - 8090:8090
+        - 8090:5000
       networks:
         - db-net
       volumes:

@@ -124,7 +124,7 @@ def create_weight():
         if direction != "none":
             if last_transaction.direction == direction:
                 if not force:
-                    return {"error": "blabla"}, 400
+                    return {"error": "Cant do in after in or out after out"}, 400
                 if force:
                     last_transaction = force_edit(last_transaction, direction, weight, truck, containers, curr_date)
                     db.session.add(last_transaction)
@@ -155,6 +155,9 @@ def create_weight():
 
     if direction == "out":
         last_transaction : Transaction = Transaction.query.order_by(Transaction.id.desc()).filter(Transaction.truck == truck, Transaction.direction == "in").first()
+        
+        if(not last_transaction):
+            return {"error": "Cant do out without an in"}, 400
         
         containers_id = last_transaction.containers.split(",")
         db_containers : list[Container] = Container.query.filter(Container.container_id.in_(containers_id)).all()

@@ -1,7 +1,7 @@
 from mailjet_rest import Client#pip install mailjet-rest
 import os
 
-def send_mail(massage:str,recipiants:list[str]):
+def send_mail(massage:str,sub:str,recipiants:list[str]):
    """_summary_
 
    :param massage: _description_
@@ -27,8 +27,7 @@ def send_mail(massage:str,recipiants:list[str]):
             {
             "Email": recipiant,
             } for recipiant in recipiants ],
-         "Subject": "Greetings from Mailjet.",
-         "TextPart": "My first Mailjet email",
+         "Subject": sub,
          "HTMLPart": "<h3>"+massage+"</h3>",
          "CustomID": "AppGettingStartedTest"
          }

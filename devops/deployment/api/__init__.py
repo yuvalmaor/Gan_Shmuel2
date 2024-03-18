@@ -1,9 +1,10 @@
-from flask import Flask,request,jsonify
-from swagger_ui import api_doc
-from multiprocessing import Pool
 from pathlib import Path
-from api.util import init_monitor_db,SERVICES_PORT,scheduler
-from api.tasks import gunicorn_logger,deploy,health_check,monitor
+from multiprocessing import Pool
+
+from api.tasks import deploy, gunicorn_logger, health_check, monitor
+from api.util import SERVICES_PORT, init_monitor_db, scheduler
+from flask import Flask, jsonify, request
+from swagger_ui import api_doc
 
 pool=Pool(1)
 
@@ -11,7 +12,8 @@ def setup(app:Flask):
    """configuration and setup"""
    app.logger.handlers = gunicorn_logger.handlers
    app.logger.setLevel(gunicorn_logger.level)
-   api_doc(app, config_path=Path(__file__).parent.joinpath("swagger","openapi.json"), url_prefix='/api/doc', title='API doc')
+   api_doc(app, config_path=Path(__file__).parent.joinpath("swagger","openapi.json"), 
+           url_prefix='/api/doc', title='API doc')
    init_monitor_db()
    for service in SERVICES_PORT:
         monitor(service)
@@ -23,18 +25,31 @@ def create_app():
 
    @app.get("/health")
    def health():
-      gunicorn_logger.info("health")
+      """Route for services health status
+      """
       result=health_check()
       return jsonify(result)
 
    @app.post("/trigger")
    def trigger():
+      """Route for Github webhook to send a trigger when
+      there is a change in a 'pull request'.
+      
+      The request must answer all of the follwoing 
+      requirements in order porceeding to deploy:
+
+      #. The "action" is 'closed'.
+      #. ['pull_request']['merged'] is true
+      #. The branch is in ['main','weight','billing']
+
+      """
       data=request.get_json()
+      branch=data['pull_request']['base']['ref']
+      merged_from=data['pull_request']['head']['ref']
       if all(data['action'] =='closed',data['pull_request']['merged'], 
-      data['pull_request']['base']['ref'] in ('main','weight','billing')):
+             branch in ('main','weight','billing')):
          results=pool.apply_async(
-               deploy,kwds={'branch':data['pull_request']['base']['ref'],
-               'merged':data['pull_request']['head']['ref']})         
+               deploy,kwds={'branch':branch,'merged':merged_from})         
       return "ok"
    
    return app

@@ -32,26 +32,32 @@ def git_pull(branch:str):
 
    :param branch: The brance that needs to be updated
    :type branch: str
-   :raises GitException: when git fails to switch branchs
+   :raises GitException: When git fails to switch branchs
    """
    gunicorn_logger.info(f"checkout: {repo.checkout(branch)}")
    if not repo.branch("--show-current") == branch:
       raise GitException(f"Failed to checkout branch: {branch}")
    
    gunicorn_logger.info(f"pull: {repo.pull()}")
-   
 
 
-def build_docker_image(app:str, image_tag:str ="latest"):
+def build_docker_image(service:str, image_tag:str ="latest"):
+   """Builds the image for the specified service with 
+   the requested tag
 
-   path= os.path.join(GIT_PATH,app)
+   :param service: The service which requires a new image
+   :type service: str
+   :param image_tag: The image tag , defaults to "latest"
+   :type image_tag: str, optional
+   """
+
+   path= os.path.join(GIT_PATH,service)
    dockerfile= './Dockerfile'  # Name of your Dockerfile
-   tag= f'{app}:{image_tag}'  # Tag for your Docker image
+   tag= f'{service}:{image_tag}'  # Tag for your Docker image
 
-   gunicorn_logger.info(f"Building Docker image '{image_tag}' from '{app}'")
+   gunicorn_logger.info(f"Building Docker image '{image_tag}' from '{service}'")
    client.images.build(path=path,dockerfile=dockerfile,tag=tag) 
    gunicorn_logger.info("Build completed successfully.")
-   return True
 
 def deploy_docker_compose(service):
       gunicorn_logger.info(f"Deploying Docker Compose for {service}...")
@@ -81,8 +87,8 @@ def deploy(branch:str,merged:str):
       build_docker_image(branch)
       deploy_docker_compose(branch)  
       monitor(branch)
-   except:
-      gunicorn_logger.error('error')
+   except Exception as exc:
+      gunicorn_logger.error(exc)
       return False
 # end gal 
 

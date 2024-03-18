@@ -1,10 +1,11 @@
 
+import os
+import subprocess
 import urllib.request
 
 import git
-from api.util import (SERVICES_PORT, ServiceDown, build_docker_image,
-                      containers_health, deploy_docker_compose,
-                      gunicorn_logger, repeating_task, task,GIT_PATH)
+from api.util import (GIT_PATH, SERVICES_PORT, ServiceDown, client,
+                      containers_health, gunicorn_logger, repeating_task, task)
 
 repo = git.cmd.Git(GIT_PATH)
 @repeating_task(10)
@@ -25,8 +26,21 @@ def git_pull(branch:str):
    gunicorn_logger.info(e)
    pass
 
-def image():
-   pass
+def build_docker_image(app:str, image_tag:str ="latest"):
+
+   path= os.path.join(GIT_PATH,app)
+   dockerfile= './Dockerfile'  # Name of your Dockerfile
+   tag= f'{app}:{image_tag}'  # Tag for your Docker image
+
+   gunicorn_logger.info(f"Building Docker image '{image_tag}' from '{app}'")
+   client.images.build(path=path,dockerfile=dockerfile,tag=tag) 
+   gunicorn_logger.info("Build completed successfully.")
+   return True
+
+def deploy_docker_compose(service):
+      gunicorn_logger.info(f"Deploying Docker Compose for {service}...")
+      subprocess.run( ["docker-compose", "-f", f"{GIT_PATH}/{service}/docker-compose.yml", "up", "-d"])
+
 # yuval
 def testing():
    # to be implemented

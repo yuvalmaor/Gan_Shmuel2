@@ -4,7 +4,6 @@ import sched
 import logging
 import sqlite3
 from uuid import uuid4
-import subprocess
 from functools import wraps
 from threading import Thread
 from datetime import datetime
@@ -21,6 +20,7 @@ gunicorn_logger = logging.getLogger('gunicorn.error')
 scheduler = sched.scheduler(time.time, time.sleep)
 con = sqlite3.connect("/logs/tasks.sqlite", check_same_thread=False)
 cur = con.cursor()
+
 class ServiceDown(Exception):
    pass
 class EmailException(Exception):
@@ -81,24 +81,6 @@ def containers_health():
                {container.labels['com.docker.compose.service']:container.status})
    return services
 
-def build_docker_image(app:str, image_tag:str ="latest"):
-   client = docker.from_env()
-   image_tag = 'latest'
-
-   # Define the build parameters
-
-   path= os.path.join(GIT_PATH,app)
-   dockerfile= './Dockerfile'  # Name of your Dockerfile
-   tag= f'{app}:{image_tag}'  # Tag for your Docker image
-
-   gunicorn_logger.info(f"Building Docker image '{image_tag}' from '{app}'")
-   client.images.build(path=path,dockerfile=dockerfile,tag=tag) 
-   gunicorn_logger.info("Build completed successfully.")
-   return True
-    
-def deploy_docker_compose(service):
-      gunicorn_logger.info(f"Deploying Docker Compose for {service}...")
-      subprocess.run( ["docker-compose", "-f", f"{GIT_PATH}/{service}/docker-compose.yml", "up", "-d"])
       
 def send_mail(massage:str,subject:str,recipiants:list[str]):
    mailjet = Client(auth=(api_key, api_secret), version='v3.1')

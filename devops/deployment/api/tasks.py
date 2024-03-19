@@ -59,7 +59,7 @@ def build_docker_image(service:str) -> None:
    :param image_tag: The image tag , defaults to "latest"
    :type image_tag: str, optional
    """
-   image_tag=datetime.now(tz=ZoneInfo('Asia/Jerusalem')).strftime("%F.%H-%M-%S")
+   image_tag=datetime.today().strftime("%F.%H-%M-%S")
    path= os.path.join(GIT_PATH,service)
    dockerfile= './Dockerfile'  # Name of your Dockerfile
    tag= f'{service}:{image_tag}'  # Tag for your Docker image

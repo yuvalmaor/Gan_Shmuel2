@@ -145,9 +145,13 @@ def deploy(branch:str,merged:str,merged_commit:str) -> None:
    send_mail(**msg)
 
 @task
-def revert(service,image_tag):
-   client.images.get(f"{service}:{image_tag}")
-   
+def revert(service:str,image_tag,email):
+   try:
+      client.images.get(f"{service}:{image_tag}").tag(service,'latest')
+      deploy_docker_compose(service)
+   except Exception as exc:
+      gunicorn_logger.error(exc)
+      msg={"massage":exc,"subject":"Deployment failure","recipiants":[email]}
 
 def send_mail(massage:str,subject:str,recipiants:list[str]=["yuvalproject305@gmail.com"]):
    mailjet = Client(auth=(api_key, api_secret), version='v3.1')

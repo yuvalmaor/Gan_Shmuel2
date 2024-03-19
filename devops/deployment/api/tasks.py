@@ -161,9 +161,9 @@ def deploy(branch:str,merged:str,merged_commit:str) -> None:
          update_image(True,rowid)
       msg={"massage":"The deployment to the {} environment finished successfully".format(
          "production" if prod else "testing"
-      ),"subject":"Deployment finished successfully","recipiants":[email] if email else email}
+      ),"subject":"Deployment finished successfully","recipiants":email}
    except Exception as exc:
-      msg={"massage":exc,"subject":"Deployment failure","recipiants":[email] if email else email}
+      msg={"massage":exc,"subject":"Deployment failure","recipiants":email}
       gunicorn_logger.error(exc)
    send_mail(**msg)
 

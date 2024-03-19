@@ -165,7 +165,9 @@ def deploy(branch:str,merged:str,merged_commit:str) -> None:
    except Exception as exc:
       msg={"massage":exc,"subject":"Deployment failure","recipiants":email}
       gunicorn_logger.error(exc)
-   send_mail(**msg)
+   if email:
+      gunicorn_logger.info('test')
+      send_mail(**msg)
 
 @task
 def revert(service:str,image_tag,email):

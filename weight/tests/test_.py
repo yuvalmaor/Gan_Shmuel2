@@ -19,3 +19,7 @@ def test_get_session(remote_address):
 
     assert response.status_code == 404
     assert expected_response == response_data
+
+# def test_get_batch(remote_address):
+  
+  

@@ -42,6 +42,21 @@ CREATE TABLE IF NOT EXISTS `transactions` (
 
 show tables;
 
+INSERT INTO transactions (datetime, direction, truck, bruto, truckTara, neto, produce, session_id) 
+VALUES ('2024-03-20 10:00:00', 'IN', 'Truck1', 20000, 10000, 10000, 'Apples', 12345);
+
+INSERT INTO transactions (datetime, direction, truck, containers, bruto, truckTara, neto, produce, session_id) 
+VALUES ('2024-03-21 08:00:00', 'IN', 'Truck2', 'container1,container2,container3', 30000, 10000, 20000, 'Oranges', 12346);
+
+INSERT INTO transactions (datetime, direction, truck, containers, bruto, truckTara, neto, produce, session_id) 
+VALUES ('2024-03-22 09:00:00', 'IN', 'Truck3', 'container1,container2', 25000, 10000, 15000, 'Bananas', 12347);
+
+INSERT INTO transactions (datetime, direction, truck, containers, bruto, truckTara, neto, session_id) 
+VALUES ('2024-03-23 10:30:00', 'OUT', 'Truck4', 'container1,container2,container3', 35000, 10000, 25000, 12348);
+
+INSERT INTO transactions (datetime, direction, truck, containers, bruto, truckTara, neto, produce, session_id) 
+VALUES ('2024-03-24 11:00:00', 'OUT', 'Truck5', 'container1', 18000, 10000, 8000, 'Pineapples', 12349);
+
 describe containers_registered;
 describe transactions;
 

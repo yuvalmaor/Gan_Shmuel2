@@ -2,16 +2,13 @@ from flask import request, jsonify, Blueprint
 from datetime import datetime
 
 # Import necessary database models and configurations
-from ..models import Transaction, Container
+from ..models import Transaction
 from ..config import logger
-
 
 # Create a blueprint for handling item-related routes
 item_blueprint = Blueprint('item_blueprint', __name__)
 
 # Define a route to handle GET requests for retrieving item information by ID
-
-
 @item_blueprint.route('/item/<id>', methods=['GET'])
 def get_item(id):
 

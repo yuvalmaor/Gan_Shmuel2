@@ -36,8 +36,7 @@
             height: auto;
          }
       }
-
-      .navbar-inverse *,
+      .btn,.navbar-inverse *,
       table * {
          font-size: 30px;
       }
@@ -54,12 +53,12 @@
                <span class="icon-bar"></span>
                <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="{{ url_for( 'revert')}}">Revert</a>
+            <a class="navbar-brand" href="{{ url_for( 'request_revert')}}">Revert</a>
          </div>
          <div class="collapse navbar-collapse" id="myNavbar">
             <ul class="nav navbar-nav">
-               <li><a href="{{ url_for( 'revert',service='weight') }}">weight</a></li>
-               <li><a href="{{ url_for( 'revert',service='billing') }}">billing</a></li>
+               <li><a href="{{ url_for( 'request_revert',service='weight') }}">weight</a></li>
+               <li><a href="{{ url_for( 'request_revert',service='billing') }}">billing</a></li>
             </ul>
          </div>
       </div>
@@ -82,8 +81,12 @@
                   <td>{{ form.version(class="form-control") }}</td>
                </tr>
                <tr>
+                  <th>{{ form.email.label }}</th>
+                  <td>{{ form.email(class="form-control") }}</td>
+               </tr>
+               <tr>
                   <th></th>
-                  <td>{{form.submit}}</td>
+                  <td>{{form.submit(class="btn btn-default")}}</td>
                </tr>
             </table>
             </form>

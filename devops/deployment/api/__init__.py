@@ -3,7 +3,7 @@ from multiprocessing import Pool
 
 from api.tasks import deploy, gunicorn_logger, health_check, monitor,revert
 from api.util import SERVICES_PORT, init_monitor_db, scheduler,get_image_list
-from flask import Flask, jsonify, request,render_template,redirect
+from flask import Flask, jsonify, request,render_template,redirect,url_for
 from swagger_ui import api_doc
 from api.forms import VersionForm
 
@@ -61,7 +61,9 @@ def create_app():
    def request_revert(service=None):
       if service and service in ['weight','billing']:
          form=VersionForm()
-         versions,current=get_image_list()
+         versions,current=get_image_list(service)
+         # versions=('afs','asfaffs','asffafsf')
+         # current='asfafs'
          form.version.choices=versions
          return render_template('revert.html',service=service,current=current,
                                 form=form)
@@ -69,10 +71,11 @@ def create_app():
       return render_template('revert.html',service=service)
    
    @app.post("/revert/<service>")
-   def revert(service):
-      if service and service in ['weight','billing']
+   def revert_version(service):
+      if service and service in ['weight','billing']:
          form=VersionForm()
-      
-      return redirect()
+         if form.validate():
+            revert(service,form.version.data,form.email.data)
+      return redirect(url_for('request_revert'))
 
    return app

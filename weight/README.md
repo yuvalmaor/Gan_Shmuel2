@@ -5,7 +5,7 @@ The Gan Shmuel Weight Microservice is designed for industrial weight measurement
 ## Key Concepts
 
 - **Bruto Weight**: The total weight, including the net weight of the fruit, the tara (empty weight) of the truck, and the sum of the tara weights of all containers.
-- **Neto Weight**: The weight of the produce only.
+- **Neto Weight**: The weight of the produce only .
 - **Tara Weight**: The empty weight of the truck and containers.
 - **Session ID**: A unique identifier for each weighing session. 
 

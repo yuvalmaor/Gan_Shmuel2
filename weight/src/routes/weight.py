@@ -134,7 +134,7 @@ def create_weight():
         if direction != "none":
             if last_transaction.direction == direction:
                 if not force:
-                    return {"error": "blabla"}, 400
+                    return {"error": f"Cant do {last_transaction.direction} direction after {direction}"}, 400
                 if force:
                     last_transaction = force_edit(last_transaction, direction, weight, truck, containers, curr_date)
                     db.session.add(last_transaction)
@@ -166,16 +166,20 @@ def create_weight():
     if direction == "out":
         last_transaction : Transaction = Transaction.query.order_by(Transaction.id.desc()).filter(Transaction.truck == truck, Transaction.direction == "in").first()
         
+        if(not last_transaction):
+            return {"error": "Cant do out without an in"}, 400
+        
         containers_id = last_transaction.containers.split(",")
         db_containers : list[Container] = Container.query.filter(Container.container_id.in_(containers_id)).all()
         neto_price = None
         if len(containers_id) == len(db_containers):
             containers_weight = calc_containers_weights([(container.weight, container.unit) for container in db_containers], unit)
-            neto_price = calc_transaction_neto(last_transaction.bruto, weight, containers_weight)
+            neto_price = containers_weight and calc_transaction_neto(last_transaction.bruto, weight, containers_weight)
         else:
             unregistered_containers =  set(containers_id)-set([container.container_id for container in db_containers])
+            logger.info(f"Inserting containers with ids- {unregistered_containers}")
             db.session.add_all([Container(container_id=container_id, unit=unit, weight=None) for container_id in unregistered_containers])
-        
+    
         new_transaction = Transaction(truck=truck,datetime=curr_date ,bruto=last_transaction.bruto,
                                        truckTara=weight, direction="out", neto=neto_price, produce=last_transaction.produce, session_id=last_transaction.session_id)
         db.session.add(new_transaction)

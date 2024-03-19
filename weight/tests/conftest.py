@@ -3,15 +3,15 @@ from src.app import create_app
 from src.database import db
 from src.models import Transaction, Container
 from datetime import datetime
-
+from requests import Session
 containers_data = [
     {"container_id": "CONT-00001", "weight": 2000, "unit": "kg"},
     {"container_id": "CONT-00002", "weight": 1500, "unit": "kg"},
     {"container_id": "CONT-00003", "weight": 1000, "unit": "lbs"},
-    {"container_id": "CONT-00004", "weight": "", "unit": ""},
+    {"container_id": "CONT-00004", "weight": None, "unit": None},
     {"container_id": "CONT-00005", "weight": 2200, "unit": "kg"},
     {"container_id": "CONT-00006", "weight": 2000, "unit": "lbs"},
-    {"container_id": "CONT-00007", "weight": "", "unit": ""},
+    {"container_id": "CONT-00007", "weight": None, "unit": None},
 ]
 
 transactions_data = [
@@ -39,7 +39,6 @@ transactions_data = [
         "bruto": 10000, "truckTara": 2000, "neto": "na", "produce": "", "session_id": 3},
 ]
 
-
 @pytest.fixture()
 def app():
     app = create_app("sqlite://")
@@ -60,5 +59,10 @@ def app():
 def client(app):
     return app.test_client()
 
-
-
+@pytest.fixture()
+def runner(app):
+    return app.test_cli_runner()
+    
+@pytest.fixture()
+def remote_address():
+    return 'http://ec2-13-200-131-223.ap-south-1.compute.amazonaws.com:8084'

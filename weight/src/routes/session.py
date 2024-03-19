@@ -10,6 +10,7 @@ def get_session(id):
     logger.info("Received request to Find A Specific Weighing Session")
 
     try:
+        logger.info("Retrieving Weighing Session from database")
         session_transactions = Transaction.query.filter(
             Transaction.session_id == id).all()
     except:
@@ -17,6 +18,7 @@ def get_session(id):
         return jsonify({"error": "An error occurred while querying the database"}), 500
 
     if not session_transactions:
+        logger.info("Session not found")
         return jsonify({"error": "Session not found"}), 404
 
     response = {
@@ -30,4 +32,5 @@ def get_session(id):
             response["truckTara"] = trans.truckTara
             response["neto"] = getattr(trans, "neto", "na")
 
+    logger.info(f"Returnig session {id}")
     return jsonify(response), 200

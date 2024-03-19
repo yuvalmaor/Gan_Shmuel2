@@ -36,4 +36,4 @@ volumes:
 networks:
     db-net:
     api-net:
-      external: false
+      external: true

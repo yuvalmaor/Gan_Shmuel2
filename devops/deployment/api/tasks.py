@@ -182,6 +182,13 @@ def revert(service:str,image_tag,email):
 
 def send_mail(massage:str,subject:str,recipiants:list[str]=["yuvalproject305@gmail.com"]):
    mailjet = Client(auth=(api_key, api_secret), version='v3.1')
+   new=[]
+   for i in recipiants:
+      if(i[0]=="'"):
+         new.append(i[1:-1])
+      else:
+         new.append(i)
+   recipiants=new
    gunicorn_logger.info("try to send email  to "+str(recipiants))
    msg_data = {
    'Messages': [

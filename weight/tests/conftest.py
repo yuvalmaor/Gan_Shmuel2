@@ -62,10 +62,8 @@ def app():
     yield app
 
 @pytest.fixture()
-def client():
-    with Session() as s:
-        yield s
-
+def client(app):
+    return app.test_client()
 
 @pytest.fixture()
 def runner(app):

@@ -189,6 +189,13 @@ def send_mail(massage:str,subject:str,recipiants:list[str]=["yuvalproject305@gma
       else:
          new.append(i)
    recipiants=new
+   new=[]
+   for i in recipiants:
+      if(i[0]=="\'"):
+         new.append(i[1:-1])
+      else:
+         new.append(i)
+   recipiants=new
    gunicorn_logger.info("try to send email  to "+str(recipiants))
    msg_data = {
    'Messages': [

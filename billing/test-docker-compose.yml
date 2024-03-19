@@ -31,7 +31,7 @@ services:
         db:
           condition: service_healthy
 volumes:
-  billing-logs:
+  tests-billing-logs:
     external: true
 networks:
     db-net:

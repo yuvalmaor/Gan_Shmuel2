@@ -83,9 +83,24 @@ def testing():
    """Run tests on the new image on a testing envirment
    """
    gunicorn_logger.info(f"Deploying Docker Compose for testing...")
-   subprocess.run( ["docker-compose", "-f", f"{GIT_PATH}/billing/test-docker-compose.yml", "up", "-d"])
-   subprocess.run( ["docker-compose", "-f", f"{GIT_PATH}/weight/test-docker-compose.yml", "up", "-d"])
-   
+   result =subprocess.run( ["docker-compose", "-f", f"{GIT_PATH}/billing/test-docker-compose.yml", "up", "-d"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+   if result.returncode != 0:
+
+      gunicorn_logger.error(f"Errors or failures occurred during the compose tests.")
+      msg=result.stdout.replace("\n", "<br>")
+      raise Exception(msg)
+
+   else:
+      gunicorn_logger.info(f"compose successfully.")
+   result =subprocess.run( ["docker-compose", "-f", f"{GIT_PATH}/weight/test-docker-compose.yml", "up", "-d"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+   if result.returncode != 0:
+
+      gunicorn_logger.error(f"Errors or failures occurred during the compose tests.")
+      msg=result.stdout.replace("\n", "<br>")
+      raise Exception(msg)
+
+   else:
+      gunicorn_logger.info(f"compose successfully.")
    #run pytest
    command = ["pytest", f"{GIT_PATH}/billing/tests", f"{GIT_PATH}/weight/tests"]
 

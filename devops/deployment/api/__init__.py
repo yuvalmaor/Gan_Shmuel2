@@ -1,11 +1,10 @@
 from pathlib import Path
 from multiprocessing import Pool
 
-from api.tasks import deploy, gunicorn_logger, health_check, monitor
-from api.util import SERVICES_PORT, init_monitor_db, scheduler
-from flask import Flask, jsonify, request,render_template
+from api.tasks import deploy, gunicorn_logger, health_check, monitor,revert
+from api.util import SERVICES_PORT, init_monitor_db, scheduler,get_image_list
+from flask import Flask, jsonify, request,render_template,redirect
 from swagger_ui import api_doc
-from api.ui import ui_bp
 from api.forms import VersionForm
 
 pool=Pool(1)
@@ -24,7 +23,6 @@ def create_app():
 
    app=Flask(__name__)
    setup(app)
-   # app.register_blueprint(ui_bp)
    @app.get("/health")
    def health():
       """Route for services health status
@@ -58,13 +56,23 @@ def create_app():
                deploy,kwds={'branch':branch,'merged':merged_from,'merged_commit':merged_commit})         
       return "ok"
    
-
    @app.get("/revert")
    @app.get("/revert/<service>")
-   def revert(service=None):
-      if service:
+   def request_revert(service=None):
+      if service and service in ['weight','billing']:
          form=VersionForm()
+         versions,current=get_image_list()
+         form.version.choices=versions
+         return render_template('revert.html',service=service,current=current,
+                                form=form)
       
       return render_template('revert.html',service=service)
+   
+   @app.post("/revert/<service>")
+   def revert(service):
+      if service and service in ['weight','billing']
+         form=VersionForm()
+      
+      return redirect()
 
    return app

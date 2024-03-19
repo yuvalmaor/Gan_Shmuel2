@@ -78,34 +78,32 @@ def deploy_docker_compose(service:str) -> None:
    gunicorn_logger.info(f"Deploying Docker Compose for {service}...")
    subprocess.run(["docker-compose", "-f", f"{GIT_PATH}/{service}/docker-compose.yml", "up", "-d"])
 
-# yuval
+
 def testing():
+   """Run tests on the new image on a testing envirment
+   """
    gunicorn_logger.info(f"Deploying Docker Compose for testing...")
-   subprocess.run(["docker-compose", "-f", f"{GIT_PATH}/billing/test-docker-compose.yml", "up", "-d"])
-   subprocess.run(["docker-compose", "-f", f"{GIT_PATH}/weight/test-docker-compose.yml", "up", "-d"])
-   #sleep?
-   # Define the command and directories as a list
-   command = ["pytest", "{GIT_PATH}/billing", "{GIT_PATH}/weight"]
+   subprocess.run( ["docker-compose", "-f", f"{GIT_PATH}/billing/test-docker-compose.yml", "up", "-d"])
+   subprocess.run( ["docker-compose", "-f", f"{GIT_PATH}/weight/test-docker-compose.yml", "up", "-d"])
+   
+   #run pytest
+   command = ["pytest", f"{GIT_PATH}/billing/tests", f"{GIT_PATH}/weight/tests"]
 
    # Run the command and capture the output and errors
    result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
    # Check if the process had an error (non-zero exit code)
    if result.returncode != 0:
-      print("Errors or failures occurred during the tests.")
-      print("Output:", result.stdout)
-      print("Errors:", result.stderr)
-      return False
+      
+      gunicorn_logger.error(f"Errors or failures occurred during the tests.")
+      msg=result.stdout.replace("\n", "<br>")
+      raise Exception(msg)
+      
    else:
-      print("All tests passed successfully.")
-      return True
-      # to be implemented
-      # * test compose up 
-      # * run tests
-      # return bool
-   #pass
-# end yuval
+      gunicorn_logger.info(f"All tests passed successfully.")
 
+      
+      
 # gal 
 def production(service:str):
    """Moves new service version to production after the tests.

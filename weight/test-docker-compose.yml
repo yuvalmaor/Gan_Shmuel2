@@ -16,7 +16,6 @@ services:
     networks:
       - inner_network
   api:
-    build: .
     image: test-weight:new
 
     ports:

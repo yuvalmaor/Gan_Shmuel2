@@ -4,11 +4,12 @@ import subprocess
 import urllib.request
 from datetime import datetime
 from zoneinfo import ZoneInfo
-import git
-from mailjet_rest import Client
-from api.util import (GIT_PATH, SERVICES_PORT, ServiceDown, client,insert_image,
-                      containers_health, gunicorn_logger, repeating_task, task)
 
+import git
+from api.util import (GIT_PATH, SERVICES_PORT, ServiceDown, client,
+                      containers_health, gunicorn_logger, insert_image,
+                      repeating_task, task, update_image)
+from mailjet_rest import Client
 
 api_key=os.getenv("API_KEY")
 api_secret=os.getenv("API_SECRET")
@@ -49,15 +50,15 @@ def git_pull(branch:str,merged_commit:str) -> str:
    gunicorn_logger.info(f"pull: {repo.pull()}")
    return repo.log(f"--format='%ae'", f"{merged_commit}^!")
 
-def build_docker_image(service:str) -> None:
+def build_docker_image(service:str) -> str:
 
    """Builds the image for the specified service with 
    the requested tag.
 
    :param service: The service which requires a new image
    :type service: str
-   :param image_tag: The image tag , defaults to "latest"
-   :type image_tag: str, optional
+   :return: The image tag
+   :rtype: str
    """
    image_tag=datetime.today().strftime("%F.%H-%M-%S")
    path= os.path.join(GIT_PATH,service)
@@ -68,7 +69,8 @@ def build_docker_image(service:str) -> None:
    image=client.images.build(path=path,dockerfile=dockerfile,tag=tag)
    image[0].tag(service,"new")
    gunicorn_logger.info("Build completed successfully.")
-   insert_image(service,image_tag,'built')
+
+   return image_tag
 
 def deploy_docker_compose(service:str) -> None:
    """Runs docker-compose for the specified service
@@ -150,10 +152,12 @@ def deploy(branch:str,merged:str,merged_commit:str) -> None:
    email=None
    try:
       email=git_pull(branch,merged_commit)
-      build_docker_image(merged if prod else branch)
+      image_tag=build_docker_image(merged if prod else branch)
       testing()
       if branch=='main':
+         rowid=insert_image(merged,image_tag)
          production()
+         update_image(True,rowid)
       msg={"massage":"The deployment to the {} environment finished successfully".format(
          "production" if prod else "testing"
       ),"subject":"Deployment finished successfully","recipiants":[email] if email else email}

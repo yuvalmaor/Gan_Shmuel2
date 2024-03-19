@@ -71,18 +71,19 @@ def init_monitor_db():
    cur.execute("""CREATE TABLE if not exists images(
    service TEXT,
    tag TEXT,
-   status TEXT)""")
+   works Boolean)""")
    t=Thread(target=scheduler.run,args=())
    t.start()
 
-def insert_image(service:str,tag:str,status:str):
+def insert_image(service:str,tag:str):
       cur.execute("INSERT INTO images VALUES(?, ?, ?)",
-               (service,tag,status))
+               (service,tag,False))
       con.commit()
       return cur.lastrowid
 
-def update_image(status:str):
-   pass
+def update_image(status:bool,rowid:int):
+   cur.execute("UPDATE images set status= ? where rowid = ?",(status,rowid))
+   con.commit()
    
 
 def containers_health():

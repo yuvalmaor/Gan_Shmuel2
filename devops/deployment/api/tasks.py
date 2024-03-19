@@ -12,7 +12,7 @@ from mailjet_rest import Client
 
 api_key=os.getenv("API_KEY")
 api_secret=os.getenv("API_SECRET")
-mailjet = Client(auth=(api_key, api_secret))
+mailjet = Client(auth=(api_key, api_secret),version='v3.1')
 #: Class for performing git commands on local git repo
 repo = git.cmd.Git(GIT_PATH)
 
@@ -180,7 +180,7 @@ def revert(service:str,image_tag,email):
    send_mail(**msg)
 
 def send_mail(massage:str,subject:str,recipiant:str="yuvalproject305@gmail.com"):
-   # gunicorn_logger.info("try to send email to "+str(recipiant))
+   gunicorn_logger.info(f"{massage}\n{subject}")
    msg_data = {
    'Messages': [
       {
@@ -191,16 +191,18 @@ def send_mail(massage:str,subject:str,recipiant:str="yuvalproject305@gmail.com")
       "To": [ 
          {
          "Email": recipiant,
+         "Name": "You"
 
          } ],
       "Subject": subject,
-      "TextPart": massage,
+      "TextPart":massage,
+      "HTMLPart":massage
       }
    ]
    }  
    result = mailjet.send.create(data=msg_data)
    if result.status_code != 200:
-      gunicorn_logger.error(f"Failed to send email to{result.status_code}\n{result.json()}")
+      gunicorn_logger.error(f"{result.status_code}\n{result.__dict__}")
    else:
       gunicorn_logger.info("email has been sended to "+str(recipiant))
    gunicorn_logger.info("done")  

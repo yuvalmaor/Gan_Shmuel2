@@ -88,22 +88,23 @@ def testing():
    if result.returncode != 0:
 
       gunicorn_logger.error(f"Errors or failures occurred during the compose tests.")
-      gunicorn_logger.error(result.stdout)
-      msg=result.stdout.replace("\n", "<br>")
+      gunicorn_logger.error(result.stdout+result.stderr)
+      msg=result.stdout+result.stderr
       raise Exception(msg)
 
    else:
-      gunicorn_logger.info(f"compose successfully.")
+      gunicorn_logger.info(f"compose test billingsuccessfully.")
    result =subprocess.run( ["docker-compose", "-f", f"{GIT_PATH}/weight/test-docker-compose.yml", "up", "-d"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
    if result.returncode != 0:
 
       gunicorn_logger.error(f"Errors or failures occurred during the compose tests.")
-      gunicorn_logger.error(result.stdout)
-      msg=result.stdout.replace("\n", "<br>")
+      gunicorn_logger.error(result.stdout+result.stderr)
+      msg=result.stdout+result.stderr
+      
       raise Exception(msg)
 
    else:
-      gunicorn_logger.info(f"compose successfully.")
+      gunicorn_logger.info(f"compose test weight successfully.")
    #run pytest
    command = ["pytest", f"{GIT_PATH}/billing/tests", f"{GIT_PATH}/weight/tests"]
 

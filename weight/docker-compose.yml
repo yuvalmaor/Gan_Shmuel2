@@ -40,7 +40,7 @@ services:
 volumes:
   weight-database:
   weight-logs:
-    external: true
+    external: false
 networks:
   inner_network:
   api-net:

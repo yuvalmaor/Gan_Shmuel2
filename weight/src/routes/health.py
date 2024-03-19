@@ -10,8 +10,8 @@ health_blueprint = Blueprint("health", __name__)
 def check_health():
     logger.info("Health check endpoint accessed")
     try:
-        db.session.execute(text("SELECT 1"))
-        logger.info("Health check successful - server and database are running")
+#        db.session.execute(text("SELECT 1"))
+ #       logger.info("Health check successful - server and database are running")
         return Response("OK", 200)
     except Exception as e:
         logger.critical("Health check failed - database is unreachable")

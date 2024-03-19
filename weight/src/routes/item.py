@@ -35,52 +35,46 @@ def get_item(id):
         # Return an error response if the date format is invalid
         return jsonify({"error": "Invalid date-time format"}), 400
 
-    # Query the Container table for the given ID & Query the Transaction table for trucks associated with the given ID (ID can represent Either Transactio or Container)
-    container_transactions = []
-    truck_transactions = []
+    TRANSACTIONS = []
+    ID_IS_TRUCK=False
     try:
-        container_transactions = Transaction.query.filter(
-            Transaction.direction == 'none',
-            Transaction.containers == id,
+        #PULLING ALL THE TRANSACTIONS AND CHECK IF THERE IS A TRUCK THAT MATCHES THE ID
+        TRANSACTIONS = Transaction.query.filter(
             Transaction.datetime >= from_date,
-            Transaction.datetime <= to_date).all()
-
-        truck_transactions = Transaction.query.filter(
-            Transaction.truck == id,
-            Transaction.datetime >= from_date,
-            Transaction.datetime <= to_date).all()
+            Transaction.datetime <= to_date).order_by(Transaction.id.desc()).all()
+        #IF THERE IS A MATCH THEN WE TURN THE FLAG INTO TRUE WHICH MEANS (THE INPUTED ID REFERS TO A TRUCK)
+        ID_IS_TRUCK = any(trans.truck == id for trans in TRANSACTIONS)
     except:
         return jsonify({"error": "Cannot access database"}), 500
-
-    # If neither a container nor a truck is found with the given ID, return an error response
-    transactions_trucks_with_container = []
-    if not truck_transactions:
-        try:
-            transactions_trucks_with_container = Transaction.query.filter(
-                Transaction.datetime >= from_date,
-                Transaction.datetime <= to_date,
-                Transaction.containers.like(f"%{id}%")
-            ).all()
-            if not transactions_trucks_with_container:
-                return jsonify({"error": "Item not found"}), 404
-        except:
-            return jsonify({"error": "Cannot access database"}), 500
-
-    # Initialize item dictionary with basic information
-    item = {"id": id, "tara": "na"}
-
-    if not truck_transactions:
-        container_sessions = set(map(lambda x: x.session_id, transactions_trucks_with_container)) | \
-            set(map(lambda x: x.session_id, container_transactions))
-        item["sessions"] = list(container_sessions)
+    
+    response = {"id": id, "tara": "na"}
+    if ID_IS_TRUCK:
+        #ITEM_IS_A_TRUCK RESPONSE GENERATING
+        TRUCK_SESSIONS = set(map(lambda x: x.session_id, filter(lambda x: x.truck == id, TRANSACTIONS)))
+        response["sessions"] = list(TRUCK_SESSIONS)
+        response["tara"] = next((transaction.truckTara for transaction in TRANSACTIONS if transaction.truckTara != None and transaction.truck == id), None)
+        return jsonify(response),200
     else:
-        # If a truck is associated with the given ID, retrieve truck sessions
-        truck_sessions = set(map(lambda x: x.session_id, truck_transactions))
-        item["sessions"] = list(truck_sessions)
+        #SEARCHING IF THE ITEM ID REFERS TO A CONTAINER
+        CONTAINER_TRANSACTIONS = []
+        for trans in TRANSACTIONS:
+            if trans.containers == id and trans.containers != 'na' and trans.containers != '':
+                CONTAINER_TRANSACTIONS.append(trans)
+                continue
+            for str in trans.containers.split(','):
+                if str == id and str != '' and str != 'na':
+                    CONTAINER_TRANSACTIONS.append(trans)
+                    break
+        
+        #WASN'T_FOUND_IN_ANY_TRANSACTION_RECORD
+        if len(CONTAINER_TRANSACTIONS) == 0:
+             return jsonify({"error": "This Id has 0 transactions matched"}), 404
 
-        last_numeric_tara = next((x for x in reversed(list(map(
-            lambda x: x.truckTara, truck_transactions))) if x is not None and isinstance(x, (int))), 'na')
-        item["tara"] = last_numeric_tara
-
-    # Return the item information in JSON format
-    return jsonify(item), 200
+        #ITEM_IS_A_CONTAINER GENERATING THE RESPONSE MESSAGE    
+        given_container_sessions = list(set(map(lambda x: x.session_id, CONTAINER_TRANSACTIONS)))
+        response["sessions"]=given_container_sessions
+        return jsonify(response),200
+        
+        
+    #ITEM_ISN'T_A_CONTAINER_OR_A_TRUCK
+    return jsonify({"error": "Item not found"}), 404

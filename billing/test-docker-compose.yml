@@ -1,4 +1,4 @@
-name: billing
+name: test-billing
 services:
   db:
       image: "mysql:8"
@@ -16,17 +16,17 @@ services:
         retries: 5
         start_period: 30s
   api:
-      image: billing:latest 
+      image: billing:new 
       environment:
-        - WEIGHT_PORT=8085
+        - WEIGHT_PORT=8084
       ports:
-        - 8090:5000
+        - 8089:5000
       networks:
         - db-net
-        - api-net
+        - api-test-net
       volumes:
         - ./rates_files:/app/rates_files
-        - billing-logs:/billing-logs # should automatically
+        - tests-billing-logs:/billing-logs # should automatically
       depends_on:
         db:
           condition: service_healthy
@@ -35,5 +35,5 @@ volumes:
     external: true
 networks:
     db-net:
-    api-net:
+    api-test-net:
       external: true

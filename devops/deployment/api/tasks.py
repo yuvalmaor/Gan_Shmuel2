@@ -13,7 +13,7 @@ from mailjet_rest import Client
 
 api_key=os.getenv("API_KEY")
 api_secret=os.getenv("API_SECRET")
-
+mailjet = Client(auth=(api_key, api_secret), version='v3.1')
 #: Class for performing git commands on local git repo
 repo = git.cmd.Git(GIT_PATH)
 
@@ -161,9 +161,9 @@ def deploy(branch:str,merged:str,merged_commit:str) -> None:
          update_image(True,rowid)
       msg={"massage":"The deployment to the {} environment finished successfully".format(
          "production" if prod else "testing"
-      ),"subject":"Deployment finished successfully","recipiants":email}
+      ),"subject":"Deployment finished successfully","recipiant":email}
    except Exception as exc:
-      msg={"massage":exc,"subject":"Deployment failure","recipiants":email}
+      msg={"massage":exc,"subject":"Deployment failure","recipiant":email}
       gunicorn_logger.error(exc)
    if email:
       gunicorn_logger.info('test')
@@ -175,15 +175,15 @@ def revert(service:str,image_tag,email):
       client.images.get(f"{service}:{image_tag}").tag(service,'latest')
       deploy_docker_compose(service)
       msg={"massage":f"Revert to {service}:{image_tag} finished successfully",
-           "subject":"Revert finished successfully","recipiants":email}
+           "subject":"Revert finished successfully","recipiant":email}
    except Exception as exc:
       gunicorn_logger.error(exc)
       msg={"massage":f"Revert to {service}:{image_tag} failed",
-           "subject":"Revert failure","recipiants":email}
+           "subject":"Revert failure","recipiant":email}
    send_mail(**msg)
 
 def send_mail(massage:str,subject:str,recipiant:str="yuvalproject305@gmail.com"):
-   mailjet = Client(auth=(api_key, api_secret), version='v3.1')
+   
 
    gunicorn_logger.info("try to send email  to "+str(recipiant))
    msg_data = {

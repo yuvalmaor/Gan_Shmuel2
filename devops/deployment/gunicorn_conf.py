@@ -12,6 +12,8 @@ wsgi_app="app:create_app()"
 accesslog = "-"  
 errorlog = "-"
 
+loglevel="debug"
+
 # logconfig_dict={
 #     'version': 1,
 #     'disable_existing_loggers': False,

@@ -13,6 +13,8 @@ services:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       timeout: 10s
       retries: 10
+    networks:
+      - inner_network
   api:
     image: weight:new
     ports:
@@ -28,6 +30,7 @@ services:
       - ./in:/app/in
       - test-weight-logs:/app/logs
     networks:
+      - inner_network
       - api-test-net
     depends_on:
       db:
@@ -36,5 +39,6 @@ volumes:
   test-weight-logs:
     external: true
 networks:
+  inner_network:
   api-test-net:
     external: true

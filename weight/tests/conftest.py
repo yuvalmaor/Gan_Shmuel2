@@ -3,7 +3,7 @@ from src.app import create_app
 from src.database import db
 from src.models import Transaction, Container
 from datetime import datetime
-
+from requests import Session
 containers_data = [
     {"container_id": "CONT-00001", "weight": 2000, "unit": "kg"},
     {"container_id": "CONT-00002", "weight": 1500, "unit": "kg"},
@@ -62,14 +62,15 @@ def app():
     yield app
 
 @pytest.fixture()
-def client(app):
-    return app.test_client()
+def client():
+    with Session() as s:
+        yield s
 
 
 @pytest.fixture()
 def runner(app):
     return app.test_cli_runner()
     
-@pytest.fixture
+@pytest.fixture()
 def remote_address():
-    return 'http://ec2-13-200-131-223.ap-south-1.compute.amazonaws.com:8085'
+    return 'http://ec2-13-200-131-223.ap-south-1.compute.amazonaws.com:8084'

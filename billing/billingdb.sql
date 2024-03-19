@@ -36,7 +36,6 @@ CREATE TABLE IF NOT EXISTS `Trucks` (
 
 INSERT INTO Provider (`id`, `name`) VALUES (1, 'ALL'), (2, 'pro2');
 
-
 INSERT INTO Rates (`product_id`, `rate`, `scope`) VALUES ('1', 2, 3),('2', 4, 1);
 
 INSERT INTO Trucks (`id`, `provider_id`) VALUES ('134-33-443', 2),

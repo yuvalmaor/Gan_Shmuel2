@@ -21,9 +21,10 @@ import requests
 
 weightAdress: str = "weight-api-1"  # TODO: move to env.
 
+
 @app.route("/health")
 def healthcheck():
-    status = {"status": "ok", "message": "Service is healthy"}
+    status = {"status": "OK", "message": "Service is healthy"}
     return jsonify(status), 200
 
 
@@ -113,19 +114,14 @@ def post_provider():
         db.session.rollback()  # Rollback changes in case of errors
         return jsonify({"error": "Internal server error"}), 500
 
-<<<<<<< HEAD
 
-=======
-    
-# PUT /provider/{id} can be used to update provider name
->>>>>>> origin/post_truck
 @app.route("/provider/<provider_id>", methods=["PUT"])
 def update_provider(provider_id):
     # Check if the provider exists in the database using its ID
     provider = Provider.query.get(provider_id)
     if not provider:
         return jsonify({"message": "Provider not found"}), 404
-    
+
     # Get the new name from the request body
     data = request.get_json()
     new_name = data.get("name")
@@ -133,10 +129,10 @@ def update_provider(provider_id):
     # Validate the new name
     if not new_name:
         return jsonify({"message": "No name provided"}), 400
-    
+
     # Update the provider's name
     provider.name = new_name
-    
+
     # Commit the changes to the database
     db.session.commit()
 
@@ -146,13 +142,13 @@ def update_provider(provider_id):
 
 from sqlalchemy.exc import IntegrityError
 
+
 @app.route("/truck", methods=["POST"])
 def register_truck():
     data = request.json
     # Check if all required fields are present in the request
     if "provider" not in data or "id" not in data:
         return jsonify({"message": "Missing required fields. Truck not saved."}), 400
-
     try:
         # Extract data from the request
         provider_id = int(data["provider"])
@@ -162,7 +158,14 @@ def register_truck():
         # Check if the provider with the given ID exists
         provider = Provider.query.get(provider_id)
         if not provider:
-            return jsonify({"message": f"Provider with ID {provider_id} does not exist. Truck not saved."}), 404
+            return (
+                jsonify(
+                    {
+                        "message": f"Provider with ID {provider_id} does not exist. Truck not saved."
+                    }
+                ),
+                404,
+            )
 
         # Add the truck to the database
         new_truck = Truck(id=truck_id, provider_id=provider_id)
@@ -171,28 +174,26 @@ def register_truck():
     except ValueError:
         return jsonify({"message": "Truck ID must be an integer."}), 400
     except IntegrityError:
-        return jsonify({"message": f"Truck with ID {truck_id} already exists in the database."}), 400
+        return (
+            jsonify(
+                {"message": f"Truck with ID {truck_id} already exists in the database."}
+            ),
+            400,
+        )
     except Exception as e:
         return jsonify({"message": f"Error saving truck to db: {e}"}), 400
 
     # Return a success message
-    return jsonify({"message": f"Truck with ID {truck_id} registered successfully."}), 201
+    return (
+        jsonify({"message": f"Truck with ID {truck_id} registered successfully."}),
+        201,
+    )
 
-
-
-
-
-
-<<<<<<< HEAD
-# POST /truck
-# registers a truck in the system
-# - provider - known provider id
-# - id - the truck license plate
 
 @app.route("/truck/<truck_id>", methods=["PUT"])
 def update_truck_provider(truck_id):
     data = request.json
-    
+
     # Check if the request contains the provider field
     if "provider" not in data:
         return jsonify({"message": "No provider ID provided in the request."}), 400
@@ -200,7 +201,7 @@ def update_truck_provider(truck_id):
     try:
         # Extract the new provider ID from the request and convert it to a string
         new_provider_id = str(data["provider"])
-        
+
         # Check if the truck with the given ID exists in the database
         truck = Truck.query.get(truck_id)
         if not truck:
@@ -209,7 +210,10 @@ def update_truck_provider(truck_id):
         # Check if the provider with the new ID exists
         new_provider = Provider.query.get(new_provider_id)
         if not new_provider:
-            return jsonify({"message": f"Provider with ID {new_provider_id} not found."}), 404
+            return (
+                jsonify({"message": f"Provider with ID {new_provider_id} not found."}),
+                404,
+            )
 
         # Update the provider ID for the truck
         truck.provider_id = new_provider_id
@@ -219,15 +223,12 @@ def update_truck_provider(truck_id):
     except Exception as e:
         return jsonify({"message": f"Error updating truck provider: {e}"}), 500
 
-    return jsonify({"message": f"Provider ID for truck {truck_id} updated successfully."}), 200
+    return (
+        jsonify({"message": f"Provider ID for truck {truck_id} updated successfully."}),
+        200,
+    )
 
 
-
-
-
-
-=======
->>>>>>> origin/post_truck
 @app.route("/rates", methods=["POST"])
 def upload_new_rates():
     # Check if the request contains the file field

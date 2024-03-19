@@ -1,0 +1,21 @@
+[
+    {
+        "weight": 100,
+        "unit": "lbs"
+    },
+    {
+        "id": "K-600",
+        "weight": 200,
+        "unit": "lbs"
+    },
+    {
+        "id": "K-400",
+        "weight": 300,
+        "unit": "lbs"
+    },
+    {
+        "id": "K-500",
+        "weight": 900,
+        "unit": "lbs"
+    }
+]

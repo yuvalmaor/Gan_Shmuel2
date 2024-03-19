@@ -43,18 +43,22 @@ transactions_data = [
 @pytest.fixture()
 def app():
     app = create_app("sqlite://")
-
+    app.config.update({
+        "TESTING": True,
+    })
     with app.app_context():
         db.create_all()
-
         for container_data in containers_data:
             container = Container(**container_data)
             db.session.add(container)
-
         for transaction_data in transactions_data:
             transaction = Transaction(**transaction_data)
             db.session.add(transaction)
-
         db.session.commit()
-
     yield app
+@pytest.fixture()
+def client(app):
+    return app.test_client()
+
+
+

@@ -4,7 +4,6 @@ import subprocess
 import urllib.request
 from datetime import datetime
 from zoneinfo import ZoneInfo
-import requests
 import git
 from api.util import (GIT_PATH, SERVICES_PORT, ServiceDown, client,
                       containers_health, gunicorn_logger, insert_image,
@@ -162,10 +161,9 @@ def deploy(branch:str,merged:str,merged_commit:str) -> None:
          "production" if prod else "testing"
       ),"subject":"Deployment finished successfully","recipiant":email}
    except Exception as exc:
-      msg={"massage":exc,"subject":"Deployment failure","recipiant":email}
+      msg={"massage":"Deployment failure","subject":"Deployment failure","recipiant":email}
       gunicorn_logger.error(exc)
    if email:
-      gunicorn_logger.info('test')
       send_mail(**msg)
 
 @task
@@ -199,10 +197,8 @@ def send_mail(massage:str,subject:str,recipiant:str="yuvalproject305@gmail.com")
       "TextPart": massage,
       }
    ]
-   }
-   gunicorn_logger.info("1")  
+   }  
    result = mailjet.send.create(data=msg_data)
-   gunicorn_logger.info("2")  
    if result.status_code != 200:
       gunicorn_logger.error("Failed to send email to"+str(recipiant))
    else:

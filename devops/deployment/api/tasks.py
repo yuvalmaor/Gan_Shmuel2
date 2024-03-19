@@ -87,6 +87,7 @@ def testing():
    if result.returncode != 0:
 
       gunicorn_logger.error(f"Errors or failures occurred during the compose tests.")
+      gunicorn_logger.error(result.stdout)
       msg=result.stdout.replace("\n", "<br>")
       raise Exception(msg)
 
@@ -96,6 +97,7 @@ def testing():
    if result.returncode != 0:
 
       gunicorn_logger.error(f"Errors or failures occurred during the compose tests.")
+      gunicorn_logger.error(result.stdout)
       msg=result.stdout.replace("\n", "<br>")
       raise Exception(msg)
 

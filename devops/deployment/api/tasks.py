@@ -102,9 +102,7 @@ def testing():
    else:
       gunicorn_logger.info(f"All tests passed successfully.")
 
-      
-      
-# gal 
+ 
 def production(service:str):
    """Moves new service version to production after the tests.
 
@@ -146,6 +144,11 @@ def deploy(branch:str,merged:str,merged_commit:str) -> None:
       gunicorn_logger.error(exc)
    send_mail(**msg)
 
+@task
+def revert(service,image_tag):
+   client.images.get(f"{service}:{image_tag}")
+   
+
 def send_mail(massage:str,subject:str,recipiants:list[str]=["yuvalproject305@gmail.com"]):
    mailjet = Client(auth=(api_key, api_secret), version='v3.1')
    data = {
@@ -169,7 +172,6 @@ def send_mail(massage:str,subject:str,recipiants:list[str]=["yuvalproject305@gma
    if result.status_code != 200:
       gunicorn_logger.error("Failed to send email")
    gunicorn_logger.info(result.json())  
-
 
 def health_check() -> dict:
    """Performs service health check

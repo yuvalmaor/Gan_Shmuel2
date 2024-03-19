@@ -3,7 +3,7 @@ from os import environ
 from logging.handlers import TimedRotatingFileHandler
 
 
-# bind = '0.0.0.0:' + environ.get('PORT', '8000')
+bind = '0.0.0.0:' + environ.get('PORT', '8000')
 workers = 1
 
 wsgi_app="app:create_app()"

@@ -111,15 +111,31 @@ def test_in_in_with_force(client,remote_address, in_payload, in_force_payload):
     assert in_response.json["id"] == force_in_response.json["id"]
 
 def test_in_out_out_force(client, remote_address,in_payload, out_payload, out_force_payload):
-    test_post_weight_in_and_out(client, remote_address, in_payload, out_payload)
-    response = client.post(remote_address + 'weight')
-    assert response.status_code == 200
+    in_response = client.post(remote_address+"/weight", json=in_payload)
+    assert in_response.status_code == 200
+    assert {
+        "bruto": 10000,
+        "truck": "77-777-77"
+    }.items() <= in_response.json.items()
+
+    out_response = client.post(remote_address+"/weight", json=out_payload)
+    assert out_response.status_code == 200
+    assert {
+        "bruto": 10000,
+        "neto": 1300,
+        "truck": "77-777-77",
+        "truckTara": 3000
+    }.items() <= out_response.json.items()
+    force_out_response = client.post(remote_address + '/weight', json=out_force_payload)
+    assert force_out_response.status_code == 200
     assert {
         "bruto": 10000,
         "neto": 2300,
         "truck": "77-777-77",
         "truckTara": 2000
-    }.items() <= response.json.items()
+    }.items() <= force_out_response.json.items()
+    assert out_response.json["id"] == force_out_response.json["id"]
+ 
 
 
 def test_in_and_none(client,remote_address, in_payload, none_payload):
@@ -140,5 +156,5 @@ def test_register_none_direction(client,remote_address, none_payload):
         "bruto": 220,
         "truck": "na"
     }.items() <= none_response.json.items()
-    assert none_response.status_code == 200    
+    assert none_response.status_code == 200
 

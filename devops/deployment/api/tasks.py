@@ -4,7 +4,7 @@ import subprocess
 import urllib.request
 from datetime import datetime
 from zoneinfo import ZoneInfo
-
+import requests
 import git
 from api.util import (GIT_PATH, SERVICES_PORT, ServiceDown, client,
                       containers_health, gunicorn_logger, insert_image,
@@ -118,7 +118,6 @@ def testing():
       
       gunicorn_logger.error(f"Errors or failures occurred during the tests.")
       msg=result.stdout+result.stderr
-      msg=msg.replace("\n", "<br>")
       raise Exception(msg)
       
    else:

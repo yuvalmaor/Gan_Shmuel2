@@ -1,6 +1,30 @@
-{% for field in form %}
-    <tr>
-        <th>{{ field.label }}</th>
-        <td>{{ field }}</td>
-    </tr>
-{% endfor %}
+<!DOCTYPE html>
+<style>
+   a {
+      font-size: xxx-large;
+   }
+</style>
+<title>Revert</title>
+{% if service %}
+
+<h1>{{service}}</h1>
+
+<h2>{{ current }}</h2>
+   {% for field in form %}
+   <tr>
+      <th>{{ field.label }}</th>
+      <td>{{ field }}</td>
+   </tr>
+   {% endfor %}
+   {% else %}
+   <h1>Choose a service</h1>
+   <hr>
+
+   <nav>
+      <ul>
+         <li><a href="{{ url_for( 'revert',service='weight') }}">weight</a></li>
+         <hr>
+         <li><a href="{{ url_for( 'revert',service='billing') }}">billing</a></li>
+      </ul>
+   </nav>
+   {% endif %}

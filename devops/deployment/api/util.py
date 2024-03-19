@@ -18,7 +18,7 @@ GIT_PATH = os.getenv("GIT_PATH")
 
 gunicorn_logger = logging.getLogger('gunicorn.error')
 scheduler = sched.scheduler(time.time, time.sleep)
-con = sqlite3.connect("/logs/tasks.sqlite", check_same_thread=False)
+con = sqlite3.connect("tasks.sqlite", check_same_thread=False)
 cur = con.cursor()
 
 class ServiceDown(Exception):
@@ -89,7 +89,7 @@ def get_image_list(service:str)->tuple[list[str],str]:
    latest_tags = client.images.get(f"{service}:latest").tags
    latest_tags.remove(f"{service}:latest")
    latest_tag = next(i for i in latest_tags if 'new' not in i).removeprefix(f"{service}:")
-   cur.execute("SELECT tag FROM images WHERE service = ?",(service,))
+   cur.execute("SELECT tag FROM images WHERE service = ? and works == 1",(service,))
    rows = [i[0] for i in cur]
    return rows,latest_tag
    

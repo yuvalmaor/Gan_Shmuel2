@@ -3,9 +3,10 @@ from multiprocessing import Pool
 
 from api.tasks import deploy, gunicorn_logger, health_check, monitor
 from api.util import SERVICES_PORT, init_monitor_db, scheduler
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request,render_template
 from swagger_ui import api_doc
 from api.ui import ui_bp
+from api.forms import VersionForm
 
 pool=Pool(1)
 
@@ -23,7 +24,7 @@ def create_app():
 
    app=Flask(__name__)
    setup(app)
-
+   # app.register_blueprint(ui_bp)
    @app.get("/health")
    def health():
       """Route for services health status
@@ -56,5 +57,14 @@ def create_app():
          results=pool.apply_async(
                deploy,kwds={'branch':branch,'merged':merged_from,'merged_commit':merged_commit})         
       return "ok"
-   app.register_blueprint(ui_bp)
+   
+
+   @app.get("/revert")
+   @app.get("/revert/<service>")
+   def revert(service=None):
+      if service:
+         form=VersionForm()
+      
+      return render_template('revert.html',service=service)
+
    return app

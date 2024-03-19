@@ -129,14 +129,22 @@ def deploy(branch:str,merged:str,merged_commit:str) -> None:
    :param merged_commit: The id of the commit that was merged
    :type merged_commit: str
    """
+   prod= any((branch=='main',))
    email=None
+   msg=''
    try:
       email=git_pull(branch,merged_commit)
-      build_docker_image(merged if branch=='main' else branch)
+      build_docker_image(merged if prod else branch)
       testing()
+      if branch=='main':
+         production()
+      msg={"massage":"The deployment to the {} environment finished successfully".format(
+         "production" if prod else "testing"
+      ),"subject":"Deployment finished successfully","recipiants":[email]}
    except Exception as exc:
-      email(exc,"Deployment failure",[email])
+      msg={"massage":exc,"subject":"Deployment failure","recipiants":[email]}
       gunicorn_logger.error(exc)
+   send_mail(**msg)
 
 def send_mail(massage:str,subject:str,recipiants:list[str]=["yuvalproject305@gmail.com"]):
    mailjet = Client(auth=(api_key, api_secret), version='v3.1')
@@ -159,7 +167,7 @@ def send_mail(massage:str,subject:str,recipiants:list[str]=["yuvalproject305@gma
    }
    result = mailjet.send.create(data=data)
    if result.status_code != 200:
-      raise EmailException("Failed to send email")   
+      gunicorn_logger.error("Failed to send email")   
 
 
 def health_check() -> dict:

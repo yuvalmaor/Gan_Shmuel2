@@ -19,7 +19,8 @@ from app.utilities.app_utility import add_rates_to_rates_db, delete_prev_rates_f
 from app.models import Truck, Rate, Provider
 import requests
 
-weightAdress: str = "weight-api-1"  # TODO: move to env.
+
+# weightAdress: str = f"weight-api-1:8085"  # TODO: move to env.
 
 @app.route("/health")
 def healthcheck():
@@ -27,45 +28,64 @@ def healthcheck():
     return jsonify(status), 200
 
 
+weightAdress: str = f"http://weight-api-1:5000"
+@app.route("/test_connection_weight", methods=["GET"])
+def test_connection():
+      res = requests.get(f"{weightAdress}/health")
+      logger.warning(res)
+      return "yeeeeeeeeeey"
+
+
+# 1. handle query ?from=t1&to=t2
+# 2. special message when the other server fails
+# 3. env viarable
 @app.route("/truck/<id>/", methods=["GET"])
-def truckREST(id):
-    logger.info(f"Received GET request for truck with ID: {id}")
+def get_truck(id):
+    try:
+        logger.info(f"Received GET request for truck with ID: {id}")
 
-    truck = Truck.query.filter_by(id=id).first()
+        truck = Truck.query.filter_by(id=id).first()
 
-    # Check if the truck exists
-    if truck is None:
-        logger.warning(f"Truck with ID {id} not found")
-        return jsonify({"error": f"Truck with ID {id} not found"}), 404
+        # Check if the truck exists
+        if truck is None:
+            logger.warning(f"Truck with ID {id} not found")
+            return jsonify({"error": f"Truck with ID {id} not found"}), 404
 
-    # Set default t1 and t2
-    t1_default = "01000000"  # 1st of month at 00:00:00
-    t2_default = "now"  # Assuming "now" means the current time
+        # t1_default = datetime(datetime.now().year, datetime.now().month, 1).strftime('%Y%m%d000000')
+        # t2_default = datetime.now().strftime('%Y%m%d%H%M%S')
 
-    t1 = request.args.get("from", t1_default)
-    t2 = request.args.get("to", t2_default)
+        # t1 = request.args.get("from", t1_default)
+        # t2 = request.args.get("to", t2_default)
 
-    logger.info(f"Received 'from' parameter: {t1}, 'to' parameter: {t2}")
+        url:str = f"{weightAdress}/item/{id}"
+        if 'from' in request.args:
+            url += f"?from={request.args['from']}"
+        if 'to' in request.args:
+            url += f"&to={request.args['to']}"
+        # logger.info(f"Received 'from' parameter: {t1}, 'to' parameter: {t2}")
 
-    # Define the URL for the third-party API
-    url = f"{weightAdress}/item/{id}?from={t1}&to={t2}"
+        # Define the URL for the third-party API
+      
 
-    logger.info(f"Making GET request to: {url}")
-    # Make the GET request to the third-party API
-    response = requests.get(url)
-    if response.status_code == 404:
-        logger.warning(f"Truck data not found for ID: {id}")
-        return jsonify({"error": f"Truck with ID {id} not found"}), 404
-    elif response.status_code != 200:
-        logger.error(
-            f"Failed to retrieve truck data for ID: {id}. Status code: {response.status_code}"
-        )
-        return jsonify({"error": "Failed to retrieve truck data"}), response.status_code
-
-    truck_data = response.json()
-    logger.info(f"Received truck data: {truck_data}")
-    return jsonify(truck_data), 200
-
+        logger.info(f"Making GET request to: {url}")
+        # Make the GET request to the third-party API
+        response = requests.get(url)
+        logger.info(f"response: {response}")
+        if response.status_code == 404:
+            logger.warning(f"Truck data not found for ID: {id}")
+            return jsonify({"error": f"Truck with ID {id} not found"}), 404
+        elif response.status_code != 200:
+            logger.error(
+                f"Failed to retrieve truck data for ID: {id}. Status code: {response.status_code}"
+            )
+            return jsonify({"error": "Failed to retrieve truck data"}), response.status_code
+        
+        truck_data = response.json()
+        logger.info(f"Received truck data: {truck_data}")
+        return jsonify(truck_data), 200
+    except Exception as e:
+        logger.warn(f"caught exception: {e}")
+        return e
 
 @app.route("/provider", methods=["POST"])
 def post_provider():

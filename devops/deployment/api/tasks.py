@@ -180,16 +180,16 @@ def revert(service:str,image_tag,email):
            "subject":"Revert failure","recipiants":[email]}
    send_mail(**msg)
 
-def send_mail(massage:str,subject:str,recipiants:list[str]=["yuvalproject305@gmail.com"]):
+def send_mail(massage:str,subject:str,recipiant:str="yuvalproject305@gmail.com"):
    mailjet = Client(auth=(api_key, api_secret), version='v3.1')
    
    
    #recipients = [i[1:-1] if i.startswith("'") and i.endswith("'") else i for i in recipients]
    #recipients = [i[1:-1] if i.startswith("\'") and i.endswith("\'") else i for i in recipients]
-   recipients = [i.replace("'", "") for i in recipients]
+   recipient= recipient.replace("'", "")
 
    
-   gunicorn_logger.info("try to send email  to "+str(recipiants))
+   gunicorn_logger.info("try to send email  to "+str(recipiant))
    msg_data = {
    'Messages': [
       {
@@ -199,8 +199,8 @@ def send_mail(massage:str,subject:str,recipiants:list[str]=["yuvalproject305@gma
       },
       "To": [ 
          {
-         "Email": recipiant,
-         } for recipiant in recipiants ],
+         "Email": recipiant
+         } ],
       "Subject": subject,
       "HTMLPart": "<h3>"+massage+"</h3>",
       "CustomID": "AppGettingStartedTest"
@@ -209,9 +209,9 @@ def send_mail(massage:str,subject:str,recipiants:list[str]=["yuvalproject305@gma
    }
    result = mailjet.send.create(data=msg_data)
    if result.status_code != 200:
-      gunicorn_logger.error("Failed to send email to"+str(recipiants))
+      gunicorn_logger.error("Failed to send email to"+str(recipiant))
    else:
-      gunicorn_logger.info("email has been sended to "+str(recipiants))
+      gunicorn_logger.info("email has been sended to "+str(recipiant))
    gunicorn_logger.info(result.json())  
 
 def health_check() -> dict:

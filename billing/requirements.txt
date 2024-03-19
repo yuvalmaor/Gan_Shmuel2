@@ -2,3 +2,10 @@ Flask
 Flask-SQLAlchemy
 PyMySQL[rsa]
 SQLAlchemy
+requests==2.26.0
+pytest-flask
+pandas
+requests
+openpyxl
+odfpy
+

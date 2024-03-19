@@ -182,6 +182,7 @@ def revert(service:str,image_tag,email):
 
 def send_mail(massage:str,subject:str,recipiants:list[str]=["yuvalproject305@gmail.com"]):
    mailjet = Client(auth=(api_key, api_secret), version='v3.1')
+   gunicorn_logger.info("try to send email  to "+str(recipiants))
    data = {
    'Messages': [
       {
@@ -201,7 +202,7 @@ def send_mail(massage:str,subject:str,recipiants:list[str]=["yuvalproject305@gma
    }
    result = mailjet.send.create(data=data)
    if result.status_code != 200:
-      gunicorn_logger.error("Failed to send email")
+      gunicorn_logger.error("Failed to send email to"+str(recipiants))
    else:
       gunicorn_logger.info("email has been sended to "+str(recipiants))
    gunicorn_logger.info(result.json())  

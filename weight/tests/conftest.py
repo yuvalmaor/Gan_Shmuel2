@@ -39,11 +39,12 @@ transactions_data = [
         "bruto": 10000, "truckTara": 2000, "neto": "na", "produce": "", "session_id": 3},
 ]
 
-
 @pytest.fixture()
 def app():
     app = create_app("sqlite://")
-
+    app.config.update({
+        "TESTING": True,
+    })
     with app.app_context():
         db.create_all()
 
@@ -56,9 +57,9 @@ def app():
             db.session.add(transaction)
 
         db.session.commit()
+     
 
     yield app
-
 
 @pytest.fixture()
 def client(app):
@@ -69,3 +70,6 @@ def client(app):
 def runner(app):
     return app.test_cli_runner()
     
+@pytest.fixture
+def remote_address():
+    return 'http://ec2-13-200-131-223.ap-south-1.compute.amazonaws.com:8085'

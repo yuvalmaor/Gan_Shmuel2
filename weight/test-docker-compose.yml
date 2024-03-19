@@ -14,7 +14,7 @@ services:
       timeout: 10s
       retries: 10
   api:
-    image: test-weight:latest
+    image: test-weight:new
     ports:
       - 8084:5000
     environment:

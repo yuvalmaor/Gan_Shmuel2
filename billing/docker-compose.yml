@@ -16,11 +16,7 @@ services:
         retries: 5
         start_period: 30s
   api:
-<<<<<<< Updated upstream
       image: billing:latest # build: .
-=======
-      build: . # build: billing:latest
->>>>>>> Stashed changes
       environment:
         - WEIGHT_PORT=8085
       ports:

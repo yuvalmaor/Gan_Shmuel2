@@ -56,5 +56,5 @@ def create_app():
          results=pool.apply_async(
                deploy,kwds={'branch':branch,'merged':merged_from,'merged_commit':merged_commit})         
       return "ok"
-   
+   app.register_blueprint(ui_bp)
    return app

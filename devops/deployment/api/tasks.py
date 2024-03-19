@@ -48,7 +48,7 @@ def git_pull(branch:str,merged_commit:str) -> str:
       raise GitException(f"Failed to checkout branch: {branch}")
    
    gunicorn_logger.info(f"pull: {repo.pull()}")
-   return repo.log(f"--format='%ae'", f"{merged_commit}^!")
+   return repo.log(f"--format=%ae", f"{merged_commit}^!")
 
 def build_docker_image(service:str) -> str:
 
@@ -182,10 +182,6 @@ def revert(service:str,image_tag,email):
 
 def send_mail(massage:str,subject:str,recipiant:str="yuvalproject305@gmail.com"):
    mailjet = Client(auth=(api_key, api_secret), version='v3.1')
-   
-   
-   #recipients = [i[1:-1] if i.startswith("'") and i.endswith("'") else i for i in recipients]
-   #recipients = [i[1:-1] if i.startswith("\'") and i.endswith("\'") else i for i in recipients]
    recipient= recipient.replace("'", "")
 
    

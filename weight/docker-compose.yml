@@ -18,7 +18,6 @@ services:
       - inner_network
   api:
     image: weight:latest
-    build: .
     ports:
       - 8085:5000
     environment:
@@ -45,3 +44,6 @@ networks:
   inner_network:
   api-net:
     external: true
+
+
+    

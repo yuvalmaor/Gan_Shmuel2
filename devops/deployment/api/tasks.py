@@ -6,7 +6,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 import git
 from mailjet_rest import Client
-from api.util import (GIT_PATH, SERVICES_PORT, ServiceDown, client,
+from api.util import (GIT_PATH, SERVICES_PORT, ServiceDown, client,insert_image,
                       containers_health, gunicorn_logger, repeating_task, task)
 
 
@@ -68,6 +68,7 @@ def build_docker_image(service:str) -> None:
    image=client.images.build(path=path,dockerfile=dockerfile,tag=tag)
    image[0].tag(service,"new")
    gunicorn_logger.info("Build completed successfully.")
+   insert_image(service,image_tag,'built')
 
 def deploy_docker_compose(service:str) -> None:
    """Runs docker-compose for the specified service
@@ -146,7 +147,6 @@ def deploy(branch:str,merged:str,merged_commit:str) -> None:
    """
    prod= any((branch=='main',))
    email=None
-   msg=''
    try:
       email=git_pull(branch,merged_commit)
       build_docker_image(merged if prod else branch)

@@ -68,8 +68,22 @@ def init_monitor_db():
    name TEXT,
    additional_info TEXT,
    created_at datetime DEFAULT CURRENT_TIMESTAMP)""")
+   cur.execute("""CREATE TABLE if not exists images(
+   service TEXT,
+   tag TEXT,
+   status TEXT)""")
    t=Thread(target=scheduler.run,args=())
    t.start()
+
+def insert_image(service:str,tag:str,status:str):
+      cur.execute("INSERT INTO images VALUES(?, ?, ?)",
+               (service,tag,status))
+      con.commit()
+      return cur.lastrowid
+
+def update_image(status:str):
+   pass
+   
 
 def containers_health():
    services=DEFAULT_STATUS.copy()

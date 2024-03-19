@@ -70,7 +70,7 @@ def init_monitor_db():
    created_at datetime DEFAULT CURRENT_TIMESTAMP)""")
    cur.execute("""CREATE TABLE if not exists images(
    service TEXT,
-   tag TEXT,
+   tag TEXT UNIQUE,
    works Boolean)""")
    t=Thread(target=scheduler.run,args=())
    t.start()
@@ -84,6 +84,14 @@ def insert_image(service:str,tag:str):
 def update_image(status:bool,rowid:int):
    cur.execute("UPDATE images set status= ? where rowid = ?",(status,rowid))
    con.commit()
+
+def get_image_list(service:str)->tuple[list[str],str]:
+   latest_tags = client.images.get(f"{service}:latest").tags
+   latest_tags.remove(f"{service}:latest")
+   latest_tag = next(i for i in latest_tags if 'new' not in i).removeprefix(f"{service}:")
+   cur.execute("SELECT tag FROM images WHERE service = ?",(service,))
+   rows = [i[0] for i in cur]
+   return rows,latest_tag
    
 
 def containers_health():

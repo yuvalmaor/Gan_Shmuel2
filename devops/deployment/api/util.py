@@ -76,7 +76,8 @@ def containers_health():
    container_list=client.containers.list(all=True)
    if container_list:
       for container in container_list:
-         if "billing" in container.name or "weight" in container.name:
+         cname=container.name
+         if "test" not in cname and ("billing" in cname or "weight" in cname):
             services[container.labels["com.docker.compose.project"]].update(
                {container.labels['com.docker.compose.service']:container.status})
    return services

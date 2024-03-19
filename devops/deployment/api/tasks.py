@@ -13,7 +13,7 @@ from mailjet_rest import Client
 
 api_key=os.getenv("API_KEY")
 api_secret=os.getenv("API_SECRET")
-mailjet = Client(auth=(api_key, api_secret), version='v3.1')
+mailjet = Client(auth=(api_key, api_secret))
 #: Class for performing git commands on local git repo
 repo = git.cmd.Git(GIT_PATH)
 

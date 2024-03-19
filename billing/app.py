@@ -67,17 +67,6 @@ def truckREST(id):
     return jsonify(truck_data), 200
 
 
-# TODO: check if can combine with same route
-@app.route("/provider")
-def get_providers():
-    logger.info("in provider")
-    providers = Provider.query.all()
-    provider_data = [
-        {"id": provider.id, "name": provider.name} for provider in providers
-    ]
-    return jsonify(provider_data)
-
-
 @app.route("/provider", methods=["POST"])
 def post_provider():
     try:
@@ -112,13 +101,7 @@ def post_provider():
         logger.error(f"Error creating new provider: {e}")
         db.session.rollback()  # Rollback changes in case of errors
         return jsonify({"error": "Internal server error"}), 500
-
-<<<<<<< HEAD
-
-=======
     
-# PUT /provider/{id} can be used to update provider name
->>>>>>> origin/post_truck
 @app.route("/provider/<provider_id>", methods=["PUT"])
 def update_provider(provider_id):
     # Check if the provider exists in the database using its ID
@@ -180,15 +163,6 @@ def register_truck():
 
 
 
-
-
-
-<<<<<<< HEAD
-# POST /truck
-# registers a truck in the system
-# - provider - known provider id
-# - id - the truck license plate
-
 @app.route("/truck/<truck_id>", methods=["PUT"])
 def update_truck_provider(truck_id):
     data = request.json
@@ -222,12 +196,6 @@ def update_truck_provider(truck_id):
     return jsonify({"message": f"Provider ID for truck {truck_id} updated successfully."}), 200
 
 
-
-
-
-
-=======
->>>>>>> origin/post_truck
 @app.route("/rates", methods=["POST"])
 def upload_new_rates():
     # Check if the request contains the file field

@@ -13,18 +13,22 @@ weight_blueprint = Blueprint('weight_blueprint', __name__)
 def get_weights():
     logger.info("Received request to retrieve transactions")
 
-    from_date_str = request.args.get(
-        'from', datetime.now().strftime('%Y%m%d') + '000000')
-    to_date_str = request.args.get(
-        'to', datetime.now().strftime('%Y%m%d%H%M%S'))
-    filter_directions = request.args.get(
-        'filter', 'in,out,none').replace('"', '').split(',')
+    from_date_str = request.args.get('from')
+    to_date_str = request.args.get('to')
+    filter_directions = request.args.get('filter', 'in,out,none').replace('"', '').split(',')
       
-    try:  
-        from_date = datetime.strptime(from_date_str, '%Y%m%d%H%M%S')
-        to_date = datetime.strptime(to_date_str, '%Y%m%d%H%M%S')
-    except:
-        return jsonify({"error": "The provided date parameters are not valid. Ensure they are in the 'YYYYMMDDHHMMSS' format and both dates are provided."})
+    try:
+        if from_date_str:
+            from_date = datetime.strptime(from_date_str, '%Y%m%d%H%M%S')
+        else:
+            from_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+
+        if to_date_str:
+            to_date = datetime.strptime(to_date_str, '%Y%m%d%H%M%S')
+        else:
+            to_date = datetime.now()
+    except ValueError:
+        return jsonify({"error": "The provided date parameters are not valid. Ensure they are in the 'YYYYMMDDHHMMSS' format."}), 400
     
     # database queries
     logger.info(

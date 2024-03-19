@@ -1,4 +1,4 @@
-name: weight
+name: test-weight
 services:
   db:
     image: mysql:8.3

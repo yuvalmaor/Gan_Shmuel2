@@ -1,3 +1,7 @@
+from src.models import Container
+from src.database import db
+
+
 def test_get_unknown(client):
     response = client.get("/unknown")
 
@@ -5,6 +9,34 @@ def test_get_unknown(client):
         "CONT-00004",
         "CONT-00007"
     ]
+    response_data = response.json
+
+    assert response.status_code == 200
+    assert expected_response == response_data
+
+
+def test_get_unknown_empty_database(app, client):
+    with app.app_context():
+        Container.query.delete()
+        db.session.commit()
+
+    response = client.get("/unknown")
+
+    expected_response = []
+    response_data = response.json
+
+    assert response.status_code == 200
+    assert expected_response == response_data
+    
+    
+def test_get_unknown_no_matches(app, client):
+    with app.app_context():
+        Container.query.filter(Container.unit.is_(None), Container.weight.is_(None)).delete(synchronize_session=False)
+        db.session.commit()
+
+    response = client.get("/unknown")
+
+    expected_response = []
     response_data = response.json
 
     assert response.status_code == 200

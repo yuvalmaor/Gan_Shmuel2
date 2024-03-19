@@ -16,7 +16,12 @@ def get_weights():
     from_date_str = request.args.get('from')
     to_date_str = request.args.get('to')
     filter_directions = request.args.get('filter', 'in,out,none').replace('"', '').split(',')
-      
+    valid_filters = ['in','out','none']
+
+    invalid_filters = [f for f in filter_directions if f not in valid_filters]
+    if invalid_filters:
+        return jsonify({"error": f"Invalid filter value(s): {', '.join(invalid_filters)}. Allowed values are: in, out, none"}), 400
+    
     try:
         if from_date_str:
             from_date = datetime.strptime(from_date_str, '%Y%m%d%H%M%S')
@@ -27,6 +32,7 @@ def get_weights():
             to_date = datetime.strptime(to_date_str, '%Y%m%d%H%M%S')
         else:
             to_date = datetime.now()
+
     except ValueError:
         return jsonify({"error": "The provided date parameters are not valid. Ensure they are in the 'YYYYMMDDHHMMSS' format."}), 400
     

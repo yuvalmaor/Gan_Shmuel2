@@ -27,3 +27,17 @@ def test_get_unknown_empty_database(app, client):
 
     assert response.status_code == 200
     assert expected_response == response_data
+    
+    
+def test_get_unknown_no_matches(app, client):
+    with app.app_context():
+        Container.query.filter(Container.unit.is_(None), Container.weight.is_(None)).delete(synchronize_session=False)
+        db.session.commit()
+
+    response = client.get("/unknown")
+
+    expected_response = []
+    response_data = response.json
+
+    assert response.status_code == 200
+    assert expected_response == response_data

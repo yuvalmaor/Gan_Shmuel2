@@ -105,6 +105,7 @@ def testing():
 
 # gal 
 def production():
+   
    # rename image tag to latest
    # compose up
    pass
@@ -122,7 +123,7 @@ def deploy(branch:str,merged:str,merged_commit:str) -> None:
    """
    try:
       git_pull(branch,merged_commit)
-      build_docker_image(branch)
+      build_docker_image(merged if branch=='main' else branch)
       deploy_docker_compose(branch)  
       monitor(branch)
    except Exception as exc:

@@ -51,6 +51,7 @@ def create_app():
 
       if all((data['action'] =='closed',data['pull_request']['merged'], 
              branch in ('main','weight','billing'))):
+         gunicorn_logger(f"Recived trigger for branch: {branch}, changes mergred from branch: {merged_from}")
          results=pool.apply_async(
                deploy,kwds={'branch':branch,'merged':merged_from,'merged_commit':merged_commit})         
       return "ok"

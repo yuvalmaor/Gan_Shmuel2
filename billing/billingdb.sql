@@ -41,3 +41,6 @@ INSERT INTO Rates (`product_id`, `rate`, `scope`) VALUES ('1', 2, 3),('2', 4, 1)
 
 INSERT INTO Trucks (`id`, `provider_id`) VALUES ('134-33-443', 2),
 ('222-33-111', 1);
+
+INSERT INTO Trucks (`id`, `provider_id`) VALUES ('Truck1', 2),
+('Truck2', 1);

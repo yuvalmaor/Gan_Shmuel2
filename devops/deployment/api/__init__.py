@@ -5,6 +5,7 @@ from api.tasks import deploy, gunicorn_logger, health_check, monitor
 from api.util import SERVICES_PORT, init_monitor_db, scheduler
 from flask import Flask, jsonify, request
 from swagger_ui import api_doc
+from api.ui import ui_bp
 
 pool=Pool(1)
 

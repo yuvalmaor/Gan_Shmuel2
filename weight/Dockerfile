@@ -14,4 +14,6 @@ COPY main.py .
 
 COPY src/ ./src
 
+COPY in/ ./in
+
 ENTRYPOINT [ "python3", "main.py" ]

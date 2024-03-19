@@ -194,10 +194,10 @@ def send_mail(massage:str,subject:str,recipiant:str="yuvalproject305@gmail.com")
       },
       "To": [ 
          {
-         "Email": recipiant
+         "Email": recipiant,
          } ],
       "Subject": subject,
-      "HTMLPart": "<h3>"+massage+"</h3>",
+      "TextPart": "<h3>"+massage+"</h3>",
       # "CustomID": "AppGettingStartedTest"
       }
    ]

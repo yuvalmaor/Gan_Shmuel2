@@ -202,6 +202,8 @@ def send_mail(massage:str,subject:str,recipiants:list[str]=["yuvalproject305@gma
    result = mailjet.send.create(data=data)
    if result.status_code != 200:
       gunicorn_logger.error("Failed to send email")
+   else:
+      gunicorn_logger.info("email has been sended to "+str(recipiants))
    gunicorn_logger.info(result.json())  
 
 def health_check() -> dict:

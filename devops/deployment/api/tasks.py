@@ -42,7 +42,7 @@ def git_pull(branch:str,merged_commit:str) -> str:
    :return: The email of the person that performed the merge
    :rtype: str
    """
-   gunicorn_logger.info(f"checkout: {repo.checkout(branch)}")
+   gunicorn_logger.info(f"checkout: {repo.checkout(branch,'--')}")
    if not repo.branch("--show-current") == branch:
       raise GitException(f"Failed to checkout branch: {branch}")
    

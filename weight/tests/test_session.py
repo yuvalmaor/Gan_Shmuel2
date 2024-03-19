@@ -12,3 +12,14 @@ def test_get_session(client):
 
     assert response.status_code == 200
     assert expected_response == response_data
+
+
+def test_get_session_no_matches(client):
+    response = client.get("/session/5")
+
+    expected_response = {"error": "Session not found"}
+    response_data = response.json
+
+    assert response.status_code == 404
+    assert expected_response == response_data
+    

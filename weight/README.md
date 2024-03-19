@@ -13,7 +13,7 @@ The Gan Shmuel Weight Microservice is designed for industrial weight measurement
 
 ### POST `/weight`
 
-Records the weight data along with server date-time.
+Records the weight data along with server date-time..
 
 #### Parameters:
 - `direction`: `in`/`out`/`none` - Direction of weighing.

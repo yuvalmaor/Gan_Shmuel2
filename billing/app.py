@@ -1,7 +1,7 @@
 from datetime import datetime
 import os
 from uuid import uuid4
-
+import json
 from flask import (
     Flask,
     jsonify,
@@ -19,7 +19,8 @@ from app.utilities.app_utility import add_rates_to_rates_db, delete_prev_rates_f
 from app.models import Truck, Rate, Provider
 import requests
 
-weightAdress: str = "weight-api-1"  # TODO: move to env.
+
+# weightAdress: str = f"weight-api-1:8085"  # TODO: move to env.
 
 
 @app.route("/health")
@@ -28,55 +29,68 @@ def healthcheck():
     return jsonify(status), 200
 
 
+weightAdress: str = f"http://weight-api-1:5000"
+
+
+@app.route("/test_connection_weight", methods=["GET"])
+def test_connection():
+    res = requests.get(f"{weightAdress}/health")
+    logger.warning(res)
+    return "yeeeeeeeeeey"
+
+
+# 1. handle query ?from=t1&to=t2
+# 2. special message when the other server fails
+# 3. env viarable
 @app.route("/truck/<id>/", methods=["GET"])
-def truckREST(id):
-    logger.info(f"Received GET request for truck with ID: {id}")
+def get_truck(id):
+    try:
+        logger.info(f"Received GET request for truck with ID: {id}")
 
-    truck = Truck.query.filter_by(id=id).first()
+        truck = Truck.query.filter_by(id=id).first()
 
-    # Check if the truck exists
-    if truck is None:
-        logger.warning(f"Truck with ID {id} not found")
-        return jsonify({"error": f"Truck with ID {id} not found"}), 404
+        # Check if the truck exists
+        if truck is None:
+            logger.warning(f"Truck with ID {id} not found")
+            return jsonify({"error": f"Truck with ID {id} not found"}), 404
 
-    # Set default t1 and t2
-    t1_default = "01000000"  # 1st of month at 00:00:00
-    t2_default = "now"  # Assuming "now" means the current time
+        # t1_default = datetime(datetime.now().year, datetime.now().month, 1).strftime('%Y%m%d000000')
+        # t2_default = datetime.now().strftime('%Y%m%d%H%M%S')
 
-    t1 = request.args.get("from", t1_default)
-    t2 = request.args.get("to", t2_default)
+        # t1 = request.args.get("from", t1_default)
+        # t2 = request.args.get("to", t2_default)
 
-    logger.info(f"Received 'from' parameter: {t1}, 'to' parameter: {t2}")
+        url: str = f"{weightAdress}/item/{id}"
+        if "from" in request.args:
+            url += f"?from={request.args['from']}"
+        if "to" in request.args:
+            url += f"&to={request.args['to']}"
+        # logger.info(f"Received 'from' parameter: {t1}, 'to' parameter: {t2}")
 
-    # Define the URL for the third-party API
-    url = f"{weightAdress}/item/{id}?from={t1}&to={t2}"
+        # Define the URL for the third-party API
 
-    logger.info(f"Making GET request to: {url}")
-    # Make the GET request to the third-party API
-    response = requests.get(url)
-    if response.status_code == 404:
-        logger.warning(f"Truck data not found for ID: {id}")
-        return jsonify({"error": f"Truck with ID {id} not found"}), 404
-    elif response.status_code != 200:
-        logger.error(
-            f"Failed to retrieve truck data for ID: {id}. Status code: {response.status_code}"
-        )
-        return jsonify({"error": "Failed to retrieve truck data"}), response.status_code
+        logger.info(f"Making GET request to: {url}")
+        # Make the GET request to the third-party API
+        response = requests.get(url)
+        logger.info(f"response: {response}")
+        if response.status_code == 404:
+            logger.warning(f"Truck data not found for ID: {id}")
+            return jsonify({"error": f"Truck with ID {id} not found"}), 404
+        elif response.status_code != 200:
+            logger.error(
+                f"Failed to retrieve truck data for ID: {id}. Status code: {response.status_code}"
+            )
+            return (
+                jsonify({"error": "Failed to retrieve truck data"}),
+                response.status_code,
+            )
 
-    truck_data = response.json()
-    logger.info(f"Received truck data: {truck_data}")
-    return jsonify(truck_data), 200
-
-
-# TODO: check if can combine with same route
-@app.route("/provider")
-def get_providers():
-    logger.info("in provider")
-    providers = Provider.query.all()
-    provider_data = [
-        {"id": provider.id, "name": provider.name} for provider in providers
-    ]
-    return jsonify(provider_data)
+        truck_data = response.json()
+        logger.info(f"Received truck data: {truck_data}")
+        return jsonify(truck_data), 200
+    except Exception as e:
+        logger.warn(f"caught exception: {e}")
+        return e
 
 
 @app.route("/provider", methods=["POST"])
@@ -313,58 +327,119 @@ def download_new_rates():
         return f"Error downloading file: {e}", 500
 
 
-# @app.route("/bill/<id>", methods=["GET"])
-# def get_bill(id):
-#     provider = Provider.query.get(id)
-#     if provider is None:
-#         return "wrong provider id", 400
-#     now = datetime.now()
-#     from_default = now.strftime("%Y%m") + "01000000"
-#     to_default = now.strftime("%Y%m%d%H%M%S")
-#     from_arg = request.args.get("from")
-#     if not from_arg:
-#         from_arg = from_default
-#     else:
-#         if len(from_arg) != 14:
-#             return "wrong datetime value"
-#         try:
-#             datetime(
-#                 from_arg[0:4],
-#                 from_arg[4:6],
-#                 from_arg[6:8],
-#                 from_arg[8:10],
-#                 from_arg[10:12],
-#                 from_arg[12:14],
-#             )
-#         except ValueError:
-#             return "wrong datetime value"
-#     to_arg = request.args.get("to")
-#     if not to_arg:
-#         to_arg = to_default
-#     else:
-#         if len(to_arg) != 14:
-#             return "wrong datetime value"
-#         try:
-#             datetime(
-#                 to_arg[0:4],
-#                 to_arg[4:6],
-#                 to_arg[6:8],
-#                 to_arg[8:10],
-#                 to_arg[10:12],
-#                 to_arg[12:14],
-#             )
-#         except ValueError:
-#             return "wrong datetime value"
-#     # get all trucks of provider id
-#     trucks = Truck.query.filter_by(provider_id=provider.id).all()
-#     truckCounter = 0
-#     sessionCounter = 0
-#     sessions = []
-#     for truck in trucks:
-#         truck_id = truck.truck_id
-#         WEIGHT__URI = f"http://{SERVER}:8084/"
-#         response = requests.get(
-#             WEIGHT_URI + f"/{truck_id}", params={"from": from_arg, "to": to_arg}
-#         )
-#         response.raise_for_status()
-#         truck_sessions = response.json()["sessions"]
+@app.route("/bill/<id>", methods=["GET"])
+def get_bill(id):
+    logger.info("in bill!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    provider = Provider.query.get(id)
+    if provider is None:
+        return "wrong provider id", 400
+    now = datetime.now()
+    from_default = now.strftime("%Y%m") + "01000000"
+    to_default = now.strftime("%Y%m%d%H%M%S")
+    from_arg = request.args.get("from")
+    if not from_arg:
+        from_arg = from_default
+    else:
+        if len(from_arg) != 14:
+            return "wrong datetime value"
+        try:
+            datetime(
+                from_arg[0:4],
+                from_arg[4:6],
+                from_arg[6:8],
+                from_arg[8:10],
+                from_arg[10:12],
+                from_arg[12:14],
+            )
+        except ValueError:
+            return "wrong datetime value"
+    to_arg = request.args.get("to")
+    if not to_arg:
+        to_arg = to_default
+    else:
+        if len(to_arg) != 14:
+            return "wrong datetime value"
+        try:
+            datetime(
+                to_arg[0:4],
+                to_arg[4:6],
+                to_arg[6:8],
+                to_arg[8:10],
+                to_arg[10:12],
+                to_arg[12:14],
+            )
+        except ValueError:
+            return "wrong datetime value"
+    # get all trucks of provider id
+    trucks = Truck.query.filter_by(provider_id=provider.id).all()
+    logger.info(f"trucks: {trucks}")
+    try:
+        truckCounter = 0
+        sessionCounter = 0
+        sessions = []
+        for truck in trucks:
+            truck_id = truck.id
+            logger.info(f"truck_id: {truck_id}")
+            response = requests.get(
+                f"http://{weightAdress}/" + f"/{truck_id}",
+                params={"from": from_arg, "to": to_arg},
+            )
+            response.raise_for_status()
+            truck_sessions = response.json()["sessions"]
+            if len(truck_sessions) > 0:
+                truckCounter += 1
+            sessionCounter += len(truck_sessions)
+            for session in truck_sessions:
+                sessions.append(session)
+        products = dict()
+        for session in sessions:
+            repsonse = requests.get(f"http://{weightAdress}/" + "f/session/{session}")
+            response.raise_for_status()
+            session_data = response.json()
+            product_id = session_data["product_id"]
+            # session counter, total neto weight, price (rate) and pay
+            products.setdefault(product_id, [0, 0, 0, 0])
+            products[product_id][0] += 1
+            if session_data["neto"].isdigit():
+                products[product_id][1] += session_data["neto"]
+        for product_name, product_data in products.items():
+            price = Rate.query.filter_by(
+                product_id=product_name, scope=provider.id
+            ).first()
+            if price is None:
+                price = Rate.query.filter_by(product_id=product_name).first()
+            if price is None:
+                # NOTIFY USER THAT PRICE OF product_id IS MISSING IN DB
+                price = DEFAULT_PRICE
+            product_data[2] = price
+        total = 0
+        for product_name, product_data in products.items():
+            pay = product_data[1] * product_data[2]
+            product_data[3] = pay
+            total += pay
+        products_output = list()
+        for product_name, product_data in products.items():
+            products_output.append(
+                {
+                    "product": product_name,
+                    "count": product_data[0],  # number of sessions
+                    "amount": product_data[1],  # total kg
+                    "rate": product_data[2],  # agorot
+                    "pay": product_data[3],  # agorot
+                }
+            )
+        output_json = json.dumps(
+            {
+                "id": provider.id,
+                "name": provider.name,
+                "from": from_arg,
+                "to": to_arg,
+                "truckCount": truckCounter,
+                "sessionCount": sessionCounter,
+                "products": products_output,
+                "total": total,
+            }
+        )
+        return output_json
+    except Exception as e:
+        return jsonify({"message": f"could not get bill: {e}"}), 400

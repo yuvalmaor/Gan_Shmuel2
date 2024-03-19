@@ -16,7 +16,12 @@ def get_weights():
     from_date_str = request.args.get('from')
     to_date_str = request.args.get('to')
     filter_directions = request.args.get('filter', 'in,out,none').replace('"', '').split(',')
-      
+    valid_filters = ['in','out','none']
+
+    invalid_filters = [f for f in filter_directions if f not in valid_filters]
+    if invalid_filters:
+        return jsonify({"error": f"Invalid filter value(s): {', '.join(invalid_filters)}. Allowed values are: in, out, none"}), 400
+    
     try:
         if from_date_str:
             from_date = datetime.strptime(from_date_str, '%Y%m%d%H%M%S')
@@ -27,6 +32,7 @@ def get_weights():
             to_date = datetime.strptime(to_date_str, '%Y%m%d%H%M%S')
         else:
             to_date = datetime.now()
+
     except ValueError:
         return jsonify({"error": "The provided date parameters are not valid. Ensure they are in the 'YYYYMMDDHHMMSS' format."}), 400
     
@@ -128,7 +134,7 @@ def create_weight():
         if direction != "none":
             if last_transaction.direction == direction:
                 if not force:
-                    return {"error": "Cant do in after in or out after out"}, 400
+                    return {"error": f"Cant do {last_transaction.direction} direction after {direction}"}, 400
                 if force:
                     last_transaction = force_edit(last_transaction, direction, weight, truck, containers, curr_date)
                     db.session.add(last_transaction)
@@ -168,11 +174,12 @@ def create_weight():
         neto_price = None
         if len(containers_id) == len(db_containers):
             containers_weight = calc_containers_weights([(container.weight, container.unit) for container in db_containers], unit)
-            neto_price = calc_transaction_neto(last_transaction.bruto, weight, containers_weight)
+            neto_price = containers_weight and calc_transaction_neto(last_transaction.bruto, weight, containers_weight)
         else:
             unregistered_containers =  set(containers_id)-set([container.container_id for container in db_containers])
+            logger.info(f"Inserting containers with ids- {unregistered_containers}")
             db.session.add_all([Container(container_id=container_id, unit=unit, weight=None) for container_id in unregistered_containers])
-        
+    
         new_transaction = Transaction(truck=truck,datetime=curr_date ,bruto=last_transaction.bruto,
                                        truckTara=weight, direction="out", neto=neto_price, produce=last_transaction.produce, session_id=last_transaction.session_id)
         db.session.add(new_transaction)

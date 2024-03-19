@@ -1,4 +1,4 @@
-name: billing
+name: test-billing
 services:
   db:
       image: "mysql:8"
@@ -16,24 +16,24 @@ services:
         retries: 5
         start_period: 30s
   api:
-      image: billing:latest # build: .
+      image: billing:new 
       environment:
-        - WEIGHT_PORT=8085
+        - WEIGHT_PORT=8084
       ports:
-        - 8090:5000
+        - 8089:5000
       networks:
         - db-net
-        - api-net
+        - api-test-net
       volumes:
         - ./rates_files:/app/rates_files
-        - billing-logs:/billing-logs # should automatically
+        - tests-billing-logs:/billing-logs # should automatically
       depends_on:
         db:
           condition: service_healthy
 volumes:
-  billing-logs: # created manually by "docker volume create billing-logs"
+  tests-billing-logs:
     external: true
 networks:
     db-net:
-    api-net:
-      external: false
+    api-test-net:
+      external: true

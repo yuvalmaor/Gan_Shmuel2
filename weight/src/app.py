@@ -12,7 +12,7 @@ def create_app(database_uri=''):
     app.config.from_object(Config)
     if database_uri:
         app.config["SQLALCHEMY_DATABASE_URI"] = database_uri
-
+    # print("Database URI:", app.config["SQLALCHEMY_DATABASE_URI"])
     #routes
     app.register_blueprint(weight.weight_blueprint)
     app.register_blueprint(health.health_blueprint)

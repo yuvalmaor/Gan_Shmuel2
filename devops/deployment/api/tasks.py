@@ -186,7 +186,7 @@ def send_mail(massage:str,subject:str,recipiants:list[str]=["yuvalproject305@gma
    
    #recipients = [i[1:-1] if i.startswith("'") and i.endswith("'") else i for i in recipients]
    #recipients = [i[1:-1] if i.startswith("\'") and i.endswith("\'") else i for i in recipients]
-   recipients = [i.replace("'", "").replace(("\'", "")) for i in recipients]
+   recipients = [i.replace("'", "") for i in recipients]
 
    
    gunicorn_logger.info("try to send email  to "+str(recipiants))

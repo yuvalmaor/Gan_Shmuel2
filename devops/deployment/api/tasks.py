@@ -117,7 +117,8 @@ def testing():
    if result.returncode != 0:
       
       gunicorn_logger.error(f"Errors or failures occurred during the tests.")
-      msg=result.stdout.replace("\n", "<br>")
+      msg=result.stdout+result.stderr
+      msg=msg.replace("\n", "<br>")
       raise Exception(msg)
       
    else:

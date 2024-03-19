@@ -157,7 +157,7 @@ def deploy(branch:str,merged:str,merged_commit:str) -> None:
       testing()
       if branch=='main':
          rowid=insert_image(merged,image_tag)
-         production()
+         production(merged)
          update_image(True,rowid)
       msg={"massage":"The deployment to the {} environment finished successfully".format(
          "production" if prod else "testing"

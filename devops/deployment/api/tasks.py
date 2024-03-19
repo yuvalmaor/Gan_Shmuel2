@@ -164,9 +164,13 @@ def revert(service:str,image_tag,email):
    try:
       client.images.get(f"{service}:{image_tag}").tag(service,'latest')
       deploy_docker_compose(service)
+      msg={"massage":f"Revert to {service}:{image_tag} finished successfully",
+           "subject":"Revert finished successfully","recipiants":[email]}
    except Exception as exc:
       gunicorn_logger.error(exc)
-      msg={"massage":exc,"subject":"Deployment failure","recipiants":[email]}
+      msg={"massage":f"Revert to {service}:{image_tag} failed",
+           "subject":"Revert failure","recipiants":[email]}
+   send_mail(**msg)
 
 def send_mail(massage:str,subject:str,recipiants:list[str]=["yuvalproject305@gmail.com"]):
    mailjet = Client(auth=(api_key, api_secret), version='v3.1')

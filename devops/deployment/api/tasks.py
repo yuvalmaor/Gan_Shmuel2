@@ -4,7 +4,6 @@ import subprocess
 import urllib.request
 from datetime import datetime
 from zoneinfo import ZoneInfo
-
 import git
 from mailjet_rest import Client
 from api.util import (GIT_PATH, SERVICES_PORT, ServiceDown, client,
@@ -50,22 +49,24 @@ def git_pull(branch:str,merged_commit:str) -> str:
    gunicorn_logger.info(f"pull: {repo.pull()}")
    return repo.log(f"--format='%ae'", f"{merged_commit}^!")
 
-def build_docker_image(service:str, image_tag:str ="latest") -> None:
+def build_docker_image(service:str) -> None:
+
    """Builds the image for the specified service with 
-   the requested tag
+   the requested tag.
 
    :param service: The service which requires a new image
    :type service: str
    :param image_tag: The image tag , defaults to "latest"
    :type image_tag: str, optional
    """
-
+   image_tag=datetime.today().strftime("%F.%H-%M-%S")
    path= os.path.join(GIT_PATH,service)
    dockerfile= './Dockerfile'  # Name of your Dockerfile
    tag= f'{service}:{image_tag}'  # Tag for your Docker image
 
    gunicorn_logger.info(f"Building Docker image '{image_tag}' from '{service}'")
-   client.images.build(path=path,dockerfile=dockerfile,tag=tag) 
+   image=client.images.build(path=path,dockerfile=dockerfile,tag=tag)
+   image[0].tag(service,"new")
    gunicorn_logger.info("Build completed successfully.")
 
 def deploy_docker_compose(service:str) -> None:
@@ -75,32 +76,16 @@ def deploy_docker_compose(service:str) -> None:
    :type service: str
    """
    gunicorn_logger.info(f"Deploying Docker Compose for {service}...")
-   subprocess.run( ["docker-compose", "-f", f"{GIT_PATH}/{service}/docker-compose.yml", "up", "-d"])
+   subprocess.run(["docker-compose", "-f", f"{GIT_PATH}/{service}/docker-compose.yml", "up", "-d"])
 
 
 def testing():
-   """
-   run tests on the new image on a testing envirment
+   """Run tests on the new image on a testing envirment
    """
    gunicorn_logger.info(f"Deploying Docker Compose for testing...")
-   result =subprocess.run( ["docker-compose", "-f", f"{GIT_PATH}/billing/test-docker-compose.yml", "up", "-d"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-   if result.returncode != 0:
-      
-      gunicorn_logger.error(f"Errors or failures occurred during the compose tests.")
-      msg=result.stdout.replace("\n", "<br>")
-      raise Exception(msg)
-      
-   else:
-      gunicorn_logger.info(f"compose successfully.")
-   result =subprocess.run( ["docker-compose", "-f", f"{GIT_PATH}/weight/test-docker-compose.yml", "up", "-d"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-   if result.returncode != 0:
-      
-      gunicorn_logger.error(f"Errors or failures occurred during the compose tests.")
-      msg=result.stdout.replace("\n", "<br>")
-      raise Exception(msg)
-      
-   else:
-      gunicorn_logger.info(f"compose successfully.")
+   subprocess.run( ["docker-compose", "-f", f"{GIT_PATH}/billing/test-docker-compose.yml", "up", "-d"])
+   subprocess.run( ["docker-compose", "-f", f"{GIT_PATH}/weight/test-docker-compose.yml", "up", "-d"])
+   
    #run pytest
    command = ["pytest", f"{GIT_PATH}/billing/tests", f"{GIT_PATH}/weight/tests"]
 
@@ -117,9 +102,7 @@ def testing():
    else:
       gunicorn_logger.info(f"All tests passed successfully.")
 
-      
-      
-# gal 
+ 
 def production(service:str):
    """Moves new service version to production after the tests.
 
@@ -144,13 +127,27 @@ def deploy(branch:str,merged:str,merged_commit:str) -> None:
    :param merged_commit: The id of the commit that was merged
    :type merged_commit: str
    """
+   prod= any((branch=='main',))
+   email=None
+   msg=''
    try:
-      git_pull(branch,merged_commit)
-      build_docker_image(merged if branch=='main' else branch)
-      deploy_docker_compose(branch)  
-      monitor(branch)
+      email=git_pull(branch,merged_commit)
+      build_docker_image(merged if prod else branch)
+      testing()
+      if branch=='main':
+         production()
+      msg={"massage":"The deployment to the {} environment finished successfully".format(
+         "production" if prod else "testing"
+      ),"subject":"Deployment finished successfully","recipiants":[email] if email else email}
    except Exception as exc:
+      msg={"massage":exc,"subject":"Deployment failure","recipiants":[email] if email else email}
       gunicorn_logger.error(exc)
+   send_mail(**msg)
+
+@task
+def revert(service,image_tag):
+   client.images.get(f"{service}:{image_tag}")
+   
 
 def send_mail(massage:str,subject:str,recipiants:list[str]=["yuvalproject305@gmail.com"]):
    mailjet = Client(auth=(api_key, api_secret), version='v3.1')
@@ -173,8 +170,8 @@ def send_mail(massage:str,subject:str,recipiants:list[str]=["yuvalproject305@gma
    }
    result = mailjet.send.create(data=data)
    if result.status_code != 200:
-      raise EmailException("Failed to send email")   
-
+      gunicorn_logger.error("Failed to send email")
+   gunicorn_logger.info(result.json())  
 
 def health_check() -> dict:
    """Performs service health check

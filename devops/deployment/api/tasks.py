@@ -183,7 +183,6 @@ def revert(service:str,image_tag,email):
    send_mail(**msg)
 
 def send_mail(massage:str,subject:str,recipiant:str="yuvalproject305@gmail.com"):
-   
 
    gunicorn_logger.info("try to send email  to "+str(recipiant))
    msg_data = {
@@ -199,7 +198,7 @@ def send_mail(massage:str,subject:str,recipiant:str="yuvalproject305@gmail.com")
          } ],
       "Subject": subject,
       "HTMLPart": "<h3>"+massage+"</h3>",
-      "CustomID": "AppGettingStartedTest"
+      # "CustomID": "AppGettingStartedTest"
       }
    ]
    }

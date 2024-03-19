@@ -13,6 +13,7 @@ import docker
 from api.config import DEFAULT_STATUS, SERVICES_PORT
 
 client = docker.from_env()
+
 GIT_PATH = os.getenv("GIT_PATH")
 
 gunicorn_logger = logging.getLogger('gunicorn.error')

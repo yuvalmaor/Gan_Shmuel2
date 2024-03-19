@@ -2,7 +2,8 @@
 import os
 import subprocess
 import urllib.request
-
+from datetime import datetime
+from zoneinfo import ZoneInfo
 import git
 from mailjet_rest import Client
 from api.util import (GIT_PATH, SERVICES_PORT, ServiceDown, client,
@@ -48,22 +49,24 @@ def git_pull(branch:str,merged_commit:str) -> str:
    gunicorn_logger.info(f"pull: {repo.pull()}")
    return repo.log(f"--format='%ae'", f"{merged_commit}^!")
 
-def build_docker_image(service:str, image_tag:str ="latest") -> None:
+def build_docker_image(service:str) -> None:
+
    """Builds the image for the specified service with 
-   the requested tag
+   the requested tag.
 
    :param service: The service which requires a new image
    :type service: str
    :param image_tag: The image tag , defaults to "latest"
    :type image_tag: str, optional
    """
-
+   image_tag=datetime.now(tz=ZoneInfo('Asia/Jerusalem')).strftime("%F.%H-%M-%S")
    path= os.path.join(GIT_PATH,service)
    dockerfile= './Dockerfile'  # Name of your Dockerfile
    tag= f'{service}:{image_tag}'  # Tag for your Docker image
 
    gunicorn_logger.info(f"Building Docker image '{image_tag}' from '{service}'")
-   client.images.build(path=path,dockerfile=dockerfile,tag=tag) 
+   image=client.images.build(path=path,dockerfile=dockerfile,tag=tag)
+   image[0].tag(service,"new")
    gunicorn_logger.info("Build completed successfully.")
 
 def deploy_docker_compose(service:str) -> None:
@@ -73,13 +76,13 @@ def deploy_docker_compose(service:str) -> None:
    :type service: str
    """
    gunicorn_logger.info(f"Deploying Docker Compose for {service}...")
-   subprocess.run( ["docker-compose", "-f", f"{GIT_PATH}/{service}/docker-compose.yml", "up", "-d"])
+   subprocess.run(["docker-compose", "-f", f"{GIT_PATH}/{service}/docker-compose.yml", "up", "-d"])
 
 # yuval
 def testing():
    gunicorn_logger.info(f"Deploying Docker Compose for testing...")
-   subprocess.run( ["docker-compose", "-f", f"{GIT_PATH}/billing/test-docker-compose.yml", "up", "-d"])
-   subprocess.run( ["docker-compose", "-f", f"{GIT_PATH}/weight/test-docker-compose.yml", "up", "-d"])
+   subprocess.run(["docker-compose", "-f", f"{GIT_PATH}/billing/test-docker-compose.yml", "up", "-d"])
+   subprocess.run(["docker-compose", "-f", f"{GIT_PATH}/weight/test-docker-compose.yml", "up", "-d"])
    #sleep?
    # Define the command and directories as a list
    command = ["pytest", "{GIT_PATH}/billing", "{GIT_PATH}/weight"]
@@ -104,11 +107,18 @@ def testing():
 # end yuval
 
 # gal 
-def production():
-   
-   # rename image tag to latest
-   # compose up
-   pass
+def production(service:str):
+   """Moves new service version to production after the tests.
+
+      #. Gives the new image the tag "latest"
+      #. Runs compose up for the specified service
+
+   :param service: The service which recived an update
+   :type service: str
+   """
+   client.images.get(f'{service}:new').tag(service,'latest')
+   deploy_docker_compose(service)  
+   monitor(service)
 
 @task
 def deploy(branch:str,merged:str,merged_commit:str) -> None:
@@ -121,15 +131,16 @@ def deploy(branch:str,merged:str,merged_commit:str) -> None:
    :param merged_commit: The id of the commit that was merged
    :type merged_commit: str
    """
+   email=None
    try:
-      git_pull(branch,merged_commit)
+      email=git_pull(branch,merged_commit)
       build_docker_image(merged if branch=='main' else branch)
-      deploy_docker_compose(branch)  
-      monitor(branch)
+      testing()
    except Exception as exc:
+      email(exc,"Deployment failure",[email])
       gunicorn_logger.error(exc)
 
-def send_mail(massage:str,subject:str,recipiants:list[str]):
+def send_mail(massage:str,subject:str,recipiants:list[str]=["yuvalproject305@gmail.com"]):
    mailjet = Client(auth=(api_key, api_secret), version='v3.1')
    data = {
    'Messages': [

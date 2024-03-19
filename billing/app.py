@@ -18,12 +18,8 @@ from . import db, app, logger
 from app.utilities.app_utility import add_rates_to_rates_db, delete_prev_rates_file
 from app.models import Truck, Rate, Provider
 import requests
-# from models import Provider, Rate, Truck
 
-@app.route("/")
-def home():
-    print("home function")
-    return "Hellooooo"
+weightAdress: str = "weight-api-1"  # TODO: move to env.
 
 @app.route("/health")
 def healthcheck():
@@ -31,17 +27,7 @@ def healthcheck():
     return jsonify(status), 200
 
 
-@app.route("/trucks")
-def get_trucks():
-    logger.info("in trucks")
-    trucks = Truck.query.all()
-    truck_data = [
-        {"id": truck.id, "provider_id": truck.provider_id} for truck in trucks
-    ]
-    return jsonify(truck_data)
-
-weightAdress:str = "weight-api-1" # TODO: move to env.
-@app.route("/truck/<id>/", methods=['GET'])
+@app.route("/truck/<id>/", methods=["GET"])
 def truckREST(id):
     logger.info(f"Received GET request for truck with ID: {id}")
 
@@ -61,7 +47,6 @@ def truckREST(id):
 
     logger.info(f"Received 'from' parameter: {t1}, 'to' parameter: {t2}")
 
-
     # Define the URL for the third-party API
     url = f"{weightAdress}/item/{id}?from={t1}&to={t2}"
 
@@ -72,12 +57,15 @@ def truckREST(id):
         logger.warning(f"Truck data not found for ID: {id}")
         return jsonify({"error": f"Truck with ID {id} not found"}), 404
     elif response.status_code != 200:
-        logger.error(f"Failed to retrieve truck data for ID: {id}. Status code: {response.status_code}")
+        logger.error(
+            f"Failed to retrieve truck data for ID: {id}. Status code: {response.status_code}"
+        )
         return jsonify({"error": "Failed to retrieve truck data"}), response.status_code
 
     truck_data = response.json()
     logger.info(f"Received truck data: {truck_data}")
     return jsonify(truck_data), 200
+
 
 # TODO: check if can combine with same route
 @app.route("/provider")
@@ -125,66 +113,121 @@ def post_provider():
         db.session.rollback()  # Rollback changes in case of errors
         return jsonify({"error": "Internal server error"}), 500
 
-# TODO: check these two functions work before uncommenting:
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+<<<<<<< HEAD
+
+=======
     
-#PUT /provider/{id} can be used to update provider name  
+# PUT /provider/{id} can be used to update provider name
+>>>>>>> origin/post_truck
 @app.route("/provider/<provider_id>", methods=["PUT"])
 def update_provider(provider_id):
-    # Check if the provider exists in the dictionary using its GUID
-    
+    # Check if the provider exists in the database using its ID
     provider = Provider.query.get(provider_id)
-    if not provider:  
+    if not provider:
         return jsonify({"message": "Provider not found"}), 404
+    
     # Get the new name from the request body
     data = request.get_json()
     new_name = data.get("name")
 
-# Validate the new name
+    # Validate the new name
     if not new_name:
         return jsonify({"message": "No name provided"}), 400
-# Update the provider's name
-    provider.name = new_name
-
-     # Return the updated provider info
-    return (
-        jsonify(
-            {
-                "message": "Provider updated successfully"
-            }
-        ),
-        200,
-    )
-
-# @app.route("/truck", methods=["POST"])
-# def register_truck():
-#     data = request.get_json()
-#     provider_id = data.get("provider")
-#     truck_id = data.get("id")  # Assuming truck ID is the license plate
-#     if not provider_id or not truck_id:
-#         return (
-#             jsonify(
-#                 {"message": "Both provider ID and truck license plate must be provided"}
-#             ),
-#             400,
-#         )
-#     if provider_id not in providers:
-#         return jsonify({"message": "Provider ID does not exist"}), 404
-#     if truck_id in trucks:
-#         return jsonify({"message": "Truck ID must be unique"}), 400
-#     trucks[truck_id] = {"provider": provider_id}
-#     return (
-#         jsonify({"message": "Truck registered successfully", "truckId": truck_id}),
-#         201,
-#     )
     
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    # Update the provider's name
+    provider.name = new_name
+    
+    # Commit the changes to the database
+    db.session.commit()
+
+    # Return the updated provider info
+    return jsonify({"message": "Provider updated successfully"}), 200
 
 
+from sqlalchemy.exc import IntegrityError
+
+@app.route("/truck", methods=["POST"])
+def register_truck():
+    data = request.json
+    # Check if all required fields are present in the request
+    if "provider" not in data or "id" not in data:
+        return jsonify({"message": "Missing required fields. Truck not saved."}), 400
+
+    try:
+        # Extract data from the request
+        provider_id = int(data["provider"])
+
+        truck_id = str(data["id"])  # Convert id to string
+
+        # Check if the provider with the given ID exists
+        provider = Provider.query.get(provider_id)
+        if not provider:
+            return jsonify({"message": f"Provider with ID {provider_id} does not exist. Truck not saved."}), 404
+
+        # Add the truck to the database
+        new_truck = Truck(id=truck_id, provider_id=provider_id)
+        db.session.add(new_truck)
+        db.session.commit()
+    except ValueError:
+        return jsonify({"message": "Truck ID must be an integer."}), 400
+    except IntegrityError:
+        return jsonify({"message": f"Truck with ID {truck_id} already exists in the database."}), 400
+    except Exception as e:
+        return jsonify({"message": f"Error saving truck to db: {e}"}), 400
+
+    # Return a success message
+    return jsonify({"message": f"Truck with ID {truck_id} registered successfully."}), 201
+
+
+
+
+
+
+<<<<<<< HEAD
 # POST /truck
 # registers a truck in the system
 # - provider - known provider id
 # - id - the truck license plate
+
+@app.route("/truck/<truck_id>", methods=["PUT"])
+def update_truck_provider(truck_id):
+    data = request.json
+    
+    # Check if the request contains the provider field
+    if "provider" not in data:
+        return jsonify({"message": "No provider ID provided in the request."}), 400
+
+    try:
+        # Extract the new provider ID from the request and convert it to a string
+        new_provider_id = str(data["provider"])
+        
+        # Check if the truck with the given ID exists in the database
+        truck = Truck.query.get(truck_id)
+        if not truck:
+            return jsonify({"message": f"Truck with ID {truck_id} not found."}), 404
+
+        # Check if the provider with the new ID exists
+        new_provider = Provider.query.get(new_provider_id)
+        if not new_provider:
+            return jsonify({"message": f"Provider with ID {new_provider_id} not found."}), 404
+
+        # Update the provider ID for the truck
+        truck.provider_id = new_provider_id
+        db.session.commit()
+    except ValueError:
+        return jsonify({"message": "Provider ID must be a string."}), 400
+    except Exception as e:
+        return jsonify({"message": f"Error updating truck provider: {e}"}), 500
+
+    return jsonify({"message": f"Provider ID for truck {truck_id} updated successfully."}), 200
+
+
+
+
+
+
+=======
+>>>>>>> origin/post_truck
 @app.route("/rates", methods=["POST"])
 def upload_new_rates():
     # Check if the request contains the file field
@@ -269,4 +312,58 @@ def download_new_rates():
         return f"Error downloading file: {e}", 500
 
 
-
+# @app.route("/bill/<id>", methods=["GET"])
+# def get_bill(id):
+#     provider = Provider.query.get(id)
+#     if provider is None:
+#         return "wrong provider id", 400
+#     now = datetime.now()
+#     from_default = now.strftime("%Y%m") + "01000000"
+#     to_default = now.strftime("%Y%m%d%H%M%S")
+#     from_arg = request.args.get("from")
+#     if not from_arg:
+#         from_arg = from_default
+#     else:
+#         if len(from_arg) != 14:
+#             return "wrong datetime value"
+#         try:
+#             datetime(
+#                 from_arg[0:4],
+#                 from_arg[4:6],
+#                 from_arg[6:8],
+#                 from_arg[8:10],
+#                 from_arg[10:12],
+#                 from_arg[12:14],
+#             )
+#         except ValueError:
+#             return "wrong datetime value"
+#     to_arg = request.args.get("to")
+#     if not to_arg:
+#         to_arg = to_default
+#     else:
+#         if len(to_arg) != 14:
+#             return "wrong datetime value"
+#         try:
+#             datetime(
+#                 to_arg[0:4],
+#                 to_arg[4:6],
+#                 to_arg[6:8],
+#                 to_arg[8:10],
+#                 to_arg[10:12],
+#                 to_arg[12:14],
+#             )
+#         except ValueError:
+#             return "wrong datetime value"
+#     # get all trucks of provider id
+#     trucks = Truck.query.filter_by(provider_id=provider.id).all()
+#     truckCounter = 0
+#     sessionCounter = 0
+#     sessions = []
+#     for truck in trucks:
+#         truck_id = truck.truck_id
+#         WEIGHT__URI = f"http://{SERVER}:8084/"
+#         response = requests.get(
+#             WEIGHT_URI + f"/{truck_id}", params={"from": from_arg, "to": to_arg}
+#         )
+#         response.raise_for_status()
+#         truck_sessions = response.json()["sessions"]

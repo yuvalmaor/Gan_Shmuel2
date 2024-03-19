@@ -2,8 +2,7 @@ from flask import request, jsonify, Blueprint
 from datetime import datetime
 from ..models import Transaction, Container
 from ..config import logger
-import string
-import secrets
+import random
 from ..utils.weight import calc_containers_weights, calc_transaction_neto
 from ..database import db
 
@@ -14,18 +13,22 @@ weight_blueprint = Blueprint('weight_blueprint', __name__)
 def get_weights():
     logger.info("Received request to retrieve transactions")
 
-    from_date_str = request.args.get(
-        'from', datetime.now().strftime('%Y%m%d') + '000000')
-    to_date_str = request.args.get(
-        'to', datetime.now().strftime('%Y%m%d%H%M%S'))
-    filter_directions = request.args.get(
-        'filter', 'in,out,none').replace('"', '').split(',')
+    from_date_str = request.args.get('from')
+    to_date_str = request.args.get('to')
+    filter_directions = request.args.get('filter', 'in,out,none').replace('"', '').split(',')
       
-    try:  
-        from_date = datetime.strptime(from_date_str, '%Y%m%d%H%M%S')
-        to_date = datetime.strptime(to_date_str, '%Y%m%d%H%M%S')
-    except:
-        return jsonify({"error": "The provided date parameters are not valid. Ensure they are in the 'YYYYMMDDHHMMSS' format and both dates are provided."})
+    try:
+        if from_date_str:
+            from_date = datetime.strptime(from_date_str, '%Y%m%d%H%M%S')
+        else:
+            from_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+
+        if to_date_str:
+            to_date = datetime.strptime(to_date_str, '%Y%m%d%H%M%S')
+        else:
+            to_date = datetime.now()
+    except ValueError:
+        return jsonify({"error": "The provided date parameters are not valid. Ensure they are in the 'YYYYMMDDHHMMSS' format."}), 400
     
     # database queries
     logger.info(
@@ -60,131 +63,124 @@ def get_weights():
 #!create better verifications for the request body
 @weight_blueprint.route('/weight', methods=['POST'])
 def create_weight():
-    logger.info("Received request to create a weight transaction")
 
-    data = dict(request.json)
+
+    def weight_container(container_id:str, unit:str, weight:int):
+        container = Container.query.filter(Container.container_id == container_id).first()
+        if not container:
+            container = Container(container_id=container_id, weight=weight, unit=unit)
+        container.weight = weight
+        container.unit = unit
+        return container
+
+    def build_response(transaction: Transaction, direction: str):
+        res = dict()
+        
+        res["id"] = transaction.id
+        res["bruto"] = transaction.bruto
+        res["truck"] = transaction.truck
+        if direction == "out":
+            res["truckTara"] = transaction.truckTara
+            res["neto"] = transaction.neto or "na"
+        return res
+    
+    def force_edit(last_transaction:Transaction, direction:str, weight:int, truck:str, containers:list[str], date:datetime = datetime.now()):
+        last_transaction.truck = truck
+        last_transaction.datetime = date
+        if direction == "in":
+            last_transaction.bruto = weight
+            last_transaction.containers = containers
+        else:
+            if last_transaction.neto != None:
+                last_transaction.neto = last_transaction.neto + last_transaction.truckTara - weight
+            last_transaction.truckTara = weight
+        return last_transaction
+
+    logger.info("Received request to create a weight transaction")
+    print(request)
+    data = request.get_json()
     #! direction: no actual default
     #! truck: if none in direction then 'na' (do we need to actually use 'na' outside of the response?)
     #! containers: can be an empty string
     #! weight is dependent on the direction
     #! produce : default 'na' (do we even need the 'na'?)
     direction = data.get("direction")
-    truck = data.get("truck", "na") # do i need to use the 'na' outside of the response?
-    containers = data.get("containers", "")
+    truck = data.get("truck")
+    containers = data.get("containers") or ""
     weight = data.get("weight")
     unit = data.get("unit")
-    force = data.get("force", False)
-    produce = data.get("produce", "na") # do i need to use the 'na' outside of the response?
+    force = data.get("force") or False
+    produce = data.get("produce") or "na"
 
-    if not direction or not weight or not unit:
-        logger.error(
-            "Invalid request: Missing required parameters direction, weight, or unit")
-        return jsonify({"error": "Invalid request, the params direction, weight, unit are required"}), 400
-    if direction not in {"in", "out", "none"}:
-        logger.error("Invalid direction provided in the request")
-        return jsonify({"error": "Invalid request, Invalid direction"}), 400
+    
+    if not direction or not weight or not unit or not truck:
+        return {"error": "Invalid request, the direction, weight, unit, truck are required"}, 401
+    
+    if truck == "na" and not containers:
+        return {"error": "Invalid request, need to specify containers when not specifing truck"}, 401
 
-    # if direction none and has a truck number return an error
-    #query all or only a specific truck
-    transactions: list[Transaction] = []
-    if (direction == 'none'):
-        if (truck != 'na'):
-            logger.error(
-                "Truck license provided for a 'none' direction transaction")
-            return jsonify({"error": "Cannot have a truck licence associated with a container."}), 400
-        transactions = Transaction.query.all()
-    else:
-        transactions = Transaction.query.order_by(
-            Transaction.datetime).filter(Transaction.truck == truck).all()
+    curr_date = datetime.now()
 
-    logger.info(
-        "Processing transactions based on direction and truck information")
-
-    former_transaction = transactions[-1] if transactions else None
-    if not former_transaction:
-        if direction == "out":
-            logger.error(
-                "Attempting to create an 'out' transaction without an 'in' transaction")
-            return jsonify({"error": "Cannot create an 'out' transaction without an existing 'in' transaction."}), 400
-    else:
-        # none after in returns an error
-        if (former_transaction.direction == 'in' and direction == 'none'):
-            logger.error("Invalid transaction sequence: 'none' after 'in'")
-            return jsonify({"error": "Cannot create a 'none' transaction after an 'in' transaction."}), 400
-        # update weight if in after in or out after out
-        if ((direction == 'in' and former_transaction.direction == 'in') or (direction == 'out' and former_transaction.direction == 'out')):
-            if (force):
-                try:
-                    transaction_response = {
-                        "id": former_transaction.id,
-                        "truck": former_transaction.truck,
-                        "bruto": former_transaction.bruto
-                    }
-                    if (direction == 'in'):
-                        former_transaction.bruto = weight
-                        db.session.commit()
-                    else:
-                        #! need to check about the calculation of the containers
-                        former_transaction.truckTara = weight
-                        transaction_response["truckTara"] = former_transaction.truckTara
-                        transaction_response["neto"] = former_transaction.neto
+    last_transaction = Transaction.query.order_by(Transaction.id.desc()).first()
+    if last_transaction:
+        if last_transaction.direction == "in" and direction == "none":
+                return {"error": "Cant do none direction after in"}, 400
+        if direction != "none":
+            if last_transaction.direction == direction:
+                if not force:
+                    return {"error": "Cant do in after in or out after out"}, 400
+                if force:
+                    last_transaction = force_edit(last_transaction, direction, weight, truck, containers, curr_date)
+                    db.session.add(last_transaction)
                     db.session.commit()
-                    logger.info(
-                        f"Transaction with ID {former_transaction.id} updated successfully")
-                    return transaction_response, 200
-                except Exception as e:
-                    logger.error(f"Failed to update transaction: {str(e)}")
-                    return jsonify({"error": "Failed to update transaction"}), 500
-            else:
-                logger.error("Invalid transaction sequence without force flag")
-                # conflict with the rules of the app but not really with the entities so not 409
-                return jsonify({"error": "Invalid transaction sequence"}), 422
+                    return build_response(last_transaction,direction), 200
+    
+    session_id  = random.randint(0, 2_000_000)
 
-    # New transaction creation logic here
-    date_time_now = datetime.now()
-    new_transaction = None
-    if direction == "in" or direction == "none":
-        alphabet = string.digits
-        session_id = ''.join(secrets.choice(alphabet) for _ in range(12))
-        new_transaction = Transaction(datetime=date_time_now, bruto=int(weight), direction=direction,
-                                      truck=truck, containers=containers, produce=produce,
-                                      session_id=session_id)
+    if direction == "none":
+        if produce == "na":
+            container = weight_container(containers, unit, weight)
+            db.session.add(container)
+        transaction = Transaction(direction=direction,truck=truck,datetime=curr_date ,containers=containers, produce=produce,
+                                  bruto=weight, session_id=session_id)
+        db.session.add(transaction)
+        db.session.commit()
+        db.session.refresh(transaction)
+        return build_response(transaction, direction), 200
+
+    if direction == "in":
+        transaction = Transaction(direction=direction,truck=truck, datetime=curr_date, containers=containers, bruto=weight, 
+                                  session_id=session_id, produce=produce)
+        # calc containers
+        db.session.add(transaction)
+        db.session.commit()
+        db.session.refresh(transaction)
+        return build_response(transaction, direction), 200
 
     if direction == "out":
-
-        used_containers_weights = Container.query.with_entities(Container.weight, Container.unit).filter(
-            Container.container_id.in_(former_transaction.containers.split(","))).all()
-        num_of_containers = len(former_transaction.containers.split(","))
-        containers_weight = calc_containers_weights(
-            used_containers_weights, unit) if num_of_containers == len(used_containers_weights) else None
-
-        print(used_containers_weights)
-        print(containers_weight)
-        neto = calc_transaction_neto(
-            former_transaction.bruto, weight, containers_weight) if containers_weight else None
-
-        new_transaction = Transaction(truck=truck, direction=direction, datetime=date_time_now,
-                                      containers=containers, bruto=former_transaction.bruto, neto=neto,
-                                      truckTara=weight, produce=produce, session_id=former_transaction.session_id)
-
-    try:
+        last_transaction : Transaction = Transaction.query.order_by(Transaction.id.desc()).filter(Transaction.truck == truck, Transaction.direction == "in").first()
+        
+        if(not last_transaction):
+            return {"error": "Cant do out without an in"}, 400
+        
+        containers_id = last_transaction.containers.split(",")
+        db_containers : list[Container] = Container.query.filter(Container.container_id.in_(containers_id)).all()
+        neto_price = None
+        if len(containers_id) == len(db_containers):
+            containers_weight = calc_containers_weights([(container.weight, container.unit) for container in db_containers], unit)
+            neto_price = calc_transaction_neto(last_transaction.bruto, weight, containers_weight)
+        else:
+            unregistered_containers =  set(containers_id)-set([container.container_id for container in db_containers])
+            db.session.add_all([Container(container_id=container_id, unit=unit, weight=None) for container_id in unregistered_containers])
+        
+        new_transaction = Transaction(truck=truck,datetime=curr_date ,bruto=last_transaction.bruto,
+                                       truckTara=weight, direction="out", neto=neto_price, produce=last_transaction.produce, session_id=last_transaction.session_id)
         db.session.add(new_transaction)
         db.session.commit()
         db.session.refresh(new_transaction)
-        logger.info(
-            f"New transaction with ID {new_transaction.id} created successfully")
-    except Exception as e:
-        logger.error(f"Failed to add new transaction: {str(e)}")
-        return jsonify({"error": "Cannot add transaction"}), 500
+        return build_response(new_transaction, direction), 200
 
-    transaction_response = {
-        "id": new_transaction.id,
-        "truck": new_transaction.truck,
-        "bruto": new_transaction.bruto
-    }
-    if direction == "out":
-        transaction_response["truckTara"] = new_transaction.truckTara
-        transaction_response["neto"] = new_transaction.neto or "na"
+        
 
-    logger.info("Transaction creation request processed successfully")
-    return transaction_response, 201
+        
+

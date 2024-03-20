@@ -3,5 +3,7 @@ __pycache__/
 *.log
 .backup/
 *.sqlite
+.vscode
+.python-version
 logs
 .DS_Store

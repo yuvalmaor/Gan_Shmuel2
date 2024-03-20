@@ -12,33 +12,35 @@ wsgi_app="app:create_app()"
 accesslog = "-"  
 errorlog = "-"
 
-# logconfig_dict={
-#     'version': 1,
-#     'disable_existing_loggers': False,
-#     'formatters': {
-#         'customFormatter': {
-#             'format':'[%(asctime)s] [%(process)d] [%(levelname)s] %(message)s',
-#             'datefmt': '%d-%m-%Y %H:%M:%S'
-#         },
-#     },
-#     'handlers': {
-#         'console': {
-#             'level': 'INFO',
-#             "class": "logging.handlers.TimedRotatingFileHandler",
-#             'formatter': 'customFormatter',
-#             "filename":"test.log",
-#             "when": "midnight",
-#             "backupCount": 2,
-#             'interval': 1
-#         }
-#     },
-#     'loggers': {
-#         'gunicorn.error': {
-#             'propagate': True,
-#         },
-#     },
-#     'root': {
-#         'level': 'INFO',
-#         'handlers': ['console'],
-#     }
-# }
+loglevel="info"
+
+logconfig_dict={
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'customFormatter': {
+            'format':'[%(asctime)s] [%(process)d] [%(levelname)s] %(message)s',
+            'datefmt': '%d-%m-%Y %H:%M:%S'
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            'formatter': 'customFormatter',
+            "filename":"/logs/api.log",
+            "when": "midnight",
+            "backupCount": 2,
+            'interval': 1
+        }
+    },
+    'loggers': {
+        'gunicorn.error': {
+            'propagate': True,
+        },
+    },
+    'root': {
+        'level': 'INFO',
+        'handlers': ['console'],
+    }
+}

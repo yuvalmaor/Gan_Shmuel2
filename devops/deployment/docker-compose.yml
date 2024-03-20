@@ -5,5 +5,25 @@ services:
     restart: always
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - billing-logs:/billing-logs
+      - weight-logs:/weight-logs
+      - logs:/logs
+      - apps:/ci/apps
+    networks:
+      - api-net
     ports:
-      - 8000:8080
+      - 8080:8000
+    env_file:
+      - .env
+      
+volumes:
+  apps:
+  logs:
+  billing-logs:
+    external: true
+  weight-logs:
+    external: true
+
+networks:
+  api-net:
+    external: true

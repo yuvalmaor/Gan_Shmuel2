@@ -37,7 +37,7 @@ COPY requirements.txt .
 RUN pip install --upgrade pip==24.0
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app.py tasks.py gunicorn_conf.py ./
-COPY ./swagger ./swagger
+COPY app.py gunicorn_conf.py ./
+COPY ./api ./api
 
 CMD ["gunicorn", "--config", "gunicorn_conf.py"]

@@ -9,7 +9,7 @@ services:
         MYSQL_ROOT_PASSWORD: "1234"
         MYSQL_DATABASE: "billdb"
       networks:
-        - db-net1
+        - db-net
       healthcheck:
         test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 --password="1234" --silent']
         interval: 3s
@@ -22,7 +22,7 @@ services:
       ports:
         - 8090:5000
       networks:
-        - db-net1
+        - db-net
         - api-net
       volumes:
         - ./rates_files:/app/rates_files

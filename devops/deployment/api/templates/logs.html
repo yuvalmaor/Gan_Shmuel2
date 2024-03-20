@@ -4,7 +4,7 @@
    iframe {
       margin-right: 1rem;
       margin-left: 0.5rem;
-}
+   }
 </style>
 
 <head>
@@ -22,12 +22,12 @@
       // function for adjusting iframe height to log size
       function resizeIframe(obj) {
          obj.style.height = obj.contentWindow.document.documentElement.scrollHeight + 'px';
-         obj.contentWindow.document.documentElement.style.fontSize = "1.5em";
-         obj.contentWindow.document.documentElement.style.filter="invert(90%)"
+         obj.contentWindow.document.documentElement.style.fontSize = "1em";
+         obj.contentWindow.document.documentElement.style.filter = "invert(100%)"
       }
    </script>
-      <iframe src="{{ url_for('web.log_stream') }}" frameborder="0" style="overflow:hidden;width:100%;" width="100%"
-         frameborder="0" scrolling="no" onload="resizeIframe(this)"></iframe>
+   <iframe src="{{ url_for('web.log_stream') }}" frameborder="0" style="overflow:hidden;width:100%;" width="100%"
+      frameborder="0" scrolling="no" onload="resizeIframe(this)"></iframe>
 </body>
 
 </html>

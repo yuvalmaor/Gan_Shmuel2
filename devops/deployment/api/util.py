@@ -82,7 +82,7 @@ def insert_image(service:str,tag:str):
       return cur.lastrowid
 
 def update_image(status:bool,rowid:int):
-   cur.execute("UPDATE images set status= ? where rowid = ?",(status,rowid))
+   cur.execute("UPDATE images set works= ? where rowid = ?",(status,rowid))
    con.commit()
 
 def get_image_list(service:str)->tuple[list[str],str]:

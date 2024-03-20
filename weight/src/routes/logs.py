@@ -9,6 +9,9 @@ logs_blueprint = Blueprint("logs",__name__)
 @logs_blueprint.route("/logs", methods=["GET"])
 def get_logs():
     res = ""
-    with open("./logs/weight-logs.txt", "r") as file:
-        res = file.readlines()
-    return res, 200
+    try:
+        with open("./logs/weight-logs.txt", "r") as file:
+            res = file.readlines()
+        return res, 200
+    except FileNotFoundError:
+        return {"Error": "No log file"}, 500

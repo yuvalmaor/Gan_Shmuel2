@@ -1,4 +1,5 @@
 import pytest
+import logging
 
 @pytest.fixture()
 def remote_address():

@@ -37,9 +37,8 @@ services:
       db:
         condition: service_healthy
 volumes:
-  test-weight-logs:
-    external: true
   weight-database:
+  test-weight-logs:
     external: true
 networks:
   inner_network:

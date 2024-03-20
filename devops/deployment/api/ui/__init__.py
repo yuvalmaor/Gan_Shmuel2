@@ -11,9 +11,9 @@ web=Blueprint("web",__name__)
 def request_revert(service=None):
    if service and service in ['weight','billing']:
       form=VersionForm()
-      # versions,current=get_image_list(service)
-      versions,current=(1,3,4,5),4
-      form.version.choices=versions
+      versions,current=get_image_list(service)
+      # versions,current=(1,3,4,5),4
+      # form.version.choices=versions
       return render_template('revert.html',service=service,current=current,
                               form=form)
    

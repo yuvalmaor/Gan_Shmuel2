@@ -1,9 +1,9 @@
 from pathlib import Path
 from multiprocessing import Pool
 from api.ui import web
-from api.tasks import deploy, gunicorn_logger, health_check, monitor,revert
-from api.util import SERVICES_PORT, init_monitor_db, scheduler,get_image_list
-from flask import Flask, jsonify, request,render_template,redirect,url_for,send_file
+from api.tasks import deploy, gunicorn_logger, health_check, monitor
+from api.util import SERVICES_PORT, init_monitor_db, scheduler
+from flask import Flask, jsonify, request
 from swagger_ui import api_doc
 # from api.forms import VersionForm
 

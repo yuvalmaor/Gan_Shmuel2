@@ -1,11 +1,11 @@
 from pathlib import Path
 from multiprocessing import Pool
-
+from api.ui import web
 from api.tasks import deploy, gunicorn_logger, health_check, monitor,revert
 from api.util import SERVICES_PORT, init_monitor_db, scheduler,get_image_list
 from flask import Flask, jsonify, request,render_template,redirect,url_for,send_file
 from swagger_ui import api_doc
-from api.forms import VersionForm
+# from api.forms import VersionForm
 
 pool=Pool(1)
 
@@ -22,6 +22,8 @@ def setup(app:Flask):
 def create_app():
 
    app=Flask(__name__)
+   app.config['TEMPLATES_AUTO_RELOAD']=True
+   app.register_blueprint(web)
    setup(app)
    @app.get("/health")
    def health():
@@ -55,39 +57,5 @@ def create_app():
          results=pool.apply_async(
                deploy,kwds={'branch':branch,'merged':merged_from,'merged_commit':merged_commit})         
       return "ok"
-   
-   @app.get("/revert")
-   @app.get("/revert/<service>")
-   def request_revert(service=None):
-      if service and service in ['weight','billing']:
-         form=VersionForm()
-         versions,current=get_image_list(service)
-         form.version.choices=versions
-         return render_template('revert.html',service=service,current=current,
-                                form=form)
-      
-      return render_template('revert.html',service=service)
-   
-   @app.post("/revert/<service>")
-   def revert_version(service):
-      if service and service in ['weight','billing']:
-         form=VersionForm(request.form)
-         if form.validate():
-            revert(service,form.version.data,form.email.data)
-      return redirect(url_for('request_revert'))
-   
-   @app.get("/logs")
-   def logs():
-      return render_template('logs.html')
-   
-   @app.get("/log-download")
-   def download_log():
-      return send_file("/logs/api.log",mimetype="text/plain",as_attachment=True)
-   
-   @app.get("/log-stream")
-   def log_stream():
-      with open('/logs/api.log') as fp:
-         text = fp.read()
-      return text ,{'Content-Type':'text/plain'}
 
    return app

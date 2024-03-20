@@ -18,7 +18,7 @@ GIT_PATH = os.getenv("GIT_PATH")
 
 gunicorn_logger = logging.getLogger('gunicorn.error')
 scheduler = sched.scheduler(time.time, time.sleep)
-con = sqlite3.connect("/logs/tasks.sqlite", check_same_thread=False)
+con = sqlite3.connect("tasks.sqlite", check_same_thread=False)
 cur = con.cursor()
 
 class ServiceDown(Exception):

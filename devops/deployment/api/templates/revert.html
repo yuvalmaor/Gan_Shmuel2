@@ -57,8 +57,8 @@
          </div>
          <div class="collapse navbar-collapse" id="myNavbar">
             <ul class="nav navbar-nav">
-               <li><a href="{{ url_for( 'request_revert',service='weight') }}">weight</a></li>
-               <li><a href="{{ url_for( 'request_revert',service='billing') }}">billing</a></li>
+               <li><a href="{{ url_for( 'web.request_revert',service='weight') }}">weight</a></li>
+               <li><a href="{{ url_for( 'web.request_revert',service='billing') }}">billing</a></li>
             </ul>
          </div>
       </div>
@@ -74,7 +74,7 @@
             <h1>{{service}}</h1>
 
             <h2>current version: {{ current }}</h2>
-            <form action="{{url_for( 'request_revert',service=service) }}" method="post">
+            <form action="{{url_for( 'web.request_revert',service=service) }}" method="post">
             <table class="table">
                <tr>
                   <th>{{ form.version.label }}</th>

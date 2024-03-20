@@ -25,8 +25,7 @@ import requests
 
 @app.route("/health")
 def healthcheck():
-    status = {"status": "OK", "message": "Service is healthy"}
-    return jsonify(status), 200
+    return "OK", 200
 
 
 weightAdress: str = f"http://weight-api-1:5000"
@@ -329,44 +328,39 @@ def download_new_rates():
 
 @app.route("/bill/<id>", methods=["GET"])
 def get_bill(id):
-
-    
     provider = Provider.query.get(id)
     if provider is None:
         return "wrong provider id", 400
-
-
-
-
-    mocked_json = json.dumps({
-        "id": f"{id}",
-        "name": provider.name,
-        "from": 11111111111111,
-        "to": 22222222222222,
-        "truckCount": 0,
-        "sessionCount": 0,
-        "products": [
-            {"product": "orange",
-             "count": 5,
-             "amount": 500,
-             "rate": 100,
-             "pay": 50000
-             },
-            {"product": "mandarina",
-             "count": 3,
-             "amount": 300,
-             "rate": 200,
-             "pay": 60000
-             },
-        ],
-        "total": 110000
-    })
-
-    #trucks = Truck.query.filter_by(provider_id=provider.id).all()
-
+    mocked_json = json.dumps(
+        {
+            "id": f"{id}",
+            "name": provider.name,
+            "from": 11111111111111,
+            "to": 22222222222222,
+            "truckCount": 0,
+            "sessionCount": 0,
+            "products": [
+                {
+                    "product": "orange",
+                    "count": 5,
+                    "amount": 500,
+                    "rate": 100,
+                    "pay": 50000,
+                },
+                {
+                    "product": "mandarina",
+                    "count": 3,
+                    "amount": 300,
+                    "rate": 200,
+                    "pay": 60000,
+                },
+            ],
+            "total": 110000,
+        }
+    )
+    # trucks = Truck.query.filter_by(provider_id=provider.id).all()
     trucks = Truck.query.filter_by(provider_id=provider.id).all()
     logger.info(f"trucks: {trucks}")
-
     try:
         truckCounter = 0
         sessionCounter = 0
@@ -374,22 +368,14 @@ def get_bill(id):
         for truck in trucks:
             truck_id = truck.id
             logger.info(f"truck_id: {truck_id}")
-
-
             url: str = f"{weightAdress}/item/{truck1}"
             if "from" in request.args:
                 url += f"?from={request.args['from']}"
             if "to" in request.args:
                 url += f"&to={request.args['to']}"
-
             logger.info(f"url: {url}")
-
-
-                
             response = requests.get(url)
-
             logger.info(f"response: {response}")
-
             response.raise_for_status()
             truck_sessions = response.json()["sessions"]
             if len(truck_sessions) > 0:

@@ -307,36 +307,29 @@ def upload_new_rates():
             400,
         )
 
-
-@app.route("/rates", methods=["GET"])
-def download_new_rates():
-    try:
-
-        # Path to the file to be downloaded
-        file_path = "/app/in/rates.xlsx"
-
-        # Check if the file exists
-        if not os.path.exists(file_path):
-            return "No rates file uploded yet", 404
-
-        # Send the file for download
-        return send_file(file_path, as_attachment=True)
-
-    except Exception as e:
-        return f"Error downloading file: {e}", 500
-
-
 @app.route("/bill/<id>", methods=["GET"])
 def get_bill(id):
+    
+   
+
     provider = Provider.query.get(id)
     if provider is None:
         return "wrong provider id", 400
+
+
+    t1_default = datetime(datetime.now().year, datetime.now().month, 1).strftime('%Y%m%d000000')
+    t2_default = datetime.now().strftime('%Y%m%d%H%M%S')
+    from_arg = request.args.get("from", t1_default)
+    to_arg = request.args.get("to", t2_default)
+
+
+
     mocked_json = json.dumps(
         {
             "id": f"{id}",
             "name": provider.name,
-            "from": 11111111111111,
-            "to": 22222222222222,
+            "from": from_arg,
+            "to": to_arg,
             "truckCount": 0,
             "sessionCount": 0,
             "products": [
@@ -358,7 +351,7 @@ def get_bill(id):
             "total": 110000,
         }
     )
-    # trucks = Truck.query.filter_by(provider_id=provider.id).all()
+
     trucks = Truck.query.filter_by(provider_id=provider.id).all()
     logger.info(f"trucks: {trucks}")
     try:
@@ -368,13 +361,17 @@ def get_bill(id):
         for truck in trucks:
             truck_id = truck.id
             logger.info(f"truck_id: {truck_id}")
-            url: str = f"{weightAdress}/item/{truck1}"
+
+            url: str = f"{weightAdress}/item/{truck_id}"
             if "from" in request.args:
-                url += f"?from={request.args['from']}"
+                url += f"?from={from_arg}"
             if "to" in request.args:
-                url += f"&to={request.args['to']}"
+                url += f"&to={to_arg}"
+
             logger.info(f"url: {url}")
+
             response = requests.get(url)
+
             logger.info(f"response: {response}")
             response.raise_for_status()
             truck_sessions = response.json()["sessions"]
@@ -385,23 +382,21 @@ def get_bill(id):
                 sessions.append(session)
         products = dict()
         for session in sessions:
-            repsonse = requests.get(f"http://{weightAdress}/" + "f/session/{session}")
+            repsonse = requests.get(f"http://{weightAdress}/" + 'f/session/{session}')
             response.raise_for_status()
             session_data = response.json()
-            product_id = session_data["product_id"]
-            # session counter, total neto weight, price (rate) and pay
-            products.setdefault(product_id, [0, 0, 0, 0])
+            product_id = session_data['product_id']
+                #session counter, total neto weight, price (rate) and pay
+            products.setdefault(product_id, [0,0,0,0])
             products[product_id][0] += 1
-            if session_data["neto"].isdigit():
-                products[product_id][1] += session_data["neto"]
+            if session_data['neto'].isdigit():
+                products[product_id][1] += session_data['neto']
         for product_name, product_data in products.items():
-            price = Rate.query.filter_by(
-                product_id=product_name, scope=provider.id
-            ).first()
+            price = Rate.query.filter_by(product_id=product_name, scope=provider.id).first()
             if price is None:
-                price = Rate.query.filter_by(product_id=product_name).first()
+               price = Rate.query.filter_by(product_id=product_name).first()
             if price is None:
-                # NOTIFY USER THAT PRICE OF product_id IS MISSING IN DB
+        #NOTIFY USER THAT PRICE OF product_id IS MISSING IN DB
                 price = DEFAULT_PRICE
             product_data[2] = price
         total = 0
@@ -411,17 +406,13 @@ def get_bill(id):
             total += pay
         products_output = list()
         for product_name, product_data in products.items():
-            products_output.append(
-                {
-                    "product": product_name,
-                    "count": product_data[0],  # number of sessions
-                    "amount": product_data[1],  # total kg
-                    "rate": product_data[2],  # agorot
-                    "pay": product_data[3],  # agorot
-                }
-            )
-        output_json = json.dumps(
-            {
+            products_output.append({ "product": product_name,
+                                        "count": product_data[0], #number of sessions
+                                        "amount": product_data[1], #total kg
+                                        "rate": product_data[2], #agorot
+                                        "pay": product_data[3] #agorot
+                                    })
+        output_json = json.dumps({
                 "id": provider.id,
                 "name": provider.name,
                 "from": from_arg,
@@ -429,9 +420,11 @@ def get_bill(id):
                 "truckCount": truckCounter,
                 "sessionCount": sessionCounter,
                 "products": products_output,
-                "total": total,
-            }
-        )
+                "total": total
+        })
         return output_json
     except Exception as e:
         return mocked_json
+
+
+

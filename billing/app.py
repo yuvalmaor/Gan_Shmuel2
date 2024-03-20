@@ -424,7 +424,9 @@ def get_bill(id):
         })
         return output_json
     except Exception as e:
-        return mocked_json
-
+            return (
+            f"Error : {e}. could not get bill",
+            400,
+        )
 
 

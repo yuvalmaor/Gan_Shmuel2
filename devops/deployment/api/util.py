@@ -91,6 +91,7 @@ def get_image_list(service:str)->tuple[list[str],str]:
    latest_tag = next(i for i in latest_tags if 'new' not in i).removeprefix(f"{service}:")
    cur.execute("SELECT tag FROM images WHERE service = ? and works = 1",(service,))
    rows = [i[0] for i in cur]
+   gunicorn_logger.info(rows)
    return rows,latest_tag
    
 

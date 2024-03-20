@@ -2,10 +2,11 @@ from flask import request, jsonify, Blueprint
 from datetime import datetime
 from ..models import Transaction, Container
 from ..config import logger
-import string
 import secrets
 from ..utils.weight import calc_containers_weights, calc_transaction_neto
 from ..database import db
+from jsonschema import Draft7Validator
+from ..schemas import weight_schema
 
 weight_blueprint = Blueprint('weight_blueprint', __name__)
 
@@ -62,7 +63,15 @@ def get_weights():
 def create_weight():
     logger.info("Received request to create a weight transaction")
 
-    data = dict(request.json)
+    data = request.get_json()
+    
+    validator = Draft7Validator(weight_schema)
+    errors = sorted(validator.iter_errors(instance=data), key=lambda e: e.path)
+    
+    if errors:
+        error_messages = [error.message for error in errors]
+        # Return the first error message or all of them as you prefer
+        return jsonify({"errors": error_messages}), 400
     #! direction: no actual default
     #! truck: if none in direction then 'na' (do we need to actually use 'na' outside of the response?)
     #! containers: can be an empty string
@@ -144,8 +153,7 @@ def create_weight():
     date_time_now = datetime.now()
     new_transaction = None
     if direction == "in" or direction == "none":
-        alphabet = string.digits
-        session_id = ''.join(secrets.choice(alphabet) for _ in range(12))
+        session_id = secrets.randbelow(2147483647 - 1000000000) + 1000000000
         new_transaction = Transaction(datetime=date_time_now, bruto=int(weight), direction=direction,
                                       truck=truck, containers=containers, produce=produce,
                                       session_id=session_id)
@@ -158,8 +166,6 @@ def create_weight():
         containers_weight = calc_containers_weights(
             used_containers_weights, unit) if num_of_containers == len(used_containers_weights) else None
 
-        print(used_containers_weights)
-        print(containers_weight)
         neto = calc_transaction_neto(
             former_transaction.bruto, weight, containers_weight) if containers_weight else None
 

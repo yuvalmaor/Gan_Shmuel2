@@ -217,6 +217,7 @@ def health_check() -> dict:
    :return: A dictionary with the services status
    :rtype: dict
    """
+   gunicorn_logger.info("health check")
    services = containers_health()
    for name in services:
       try:
@@ -224,6 +225,7 @@ def health_check() -> dict:
                f"http://ec2-13-200-131-223.ap-south-1.compute.amazonaws.com:{SERVICES_PORT[name]}/health", timeout=10)
       except:
          services[name]['api'] = 'down'
+   gunicorn_logger.info(services)
    return services
 
 if __name__ == '__main__':

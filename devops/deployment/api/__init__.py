@@ -62,8 +62,6 @@ def create_app():
       if service and service in ['weight','billing']:
          form=VersionForm()
          versions,current=get_image_list(service)
-         # versions=('afs','asfaffs','asffafsf')
-         # current='asfafs'
          form.version.choices=versions
          return render_template('revert.html',service=service,current=current,
                                 form=form)

@@ -1,7 +1,7 @@
 from flask import Flask
 from .config import Config
 from .database import db
-from .routes import weight, health , session , item , unkown, batch
+from .routes import weight, health , session , item , unkown, batch, logs
 
 
 def create_app(database_uri=''):
@@ -20,6 +20,6 @@ def create_app(database_uri=''):
     app.register_blueprint(session.session_blueprint)
     app.register_blueprint(unkown.unknown_blueprint)
     app.register_blueprint(item.item_blueprint)
-
+    app.register_blueprint(logs.logs_blueprint)
     db.init_app(app)
     return app

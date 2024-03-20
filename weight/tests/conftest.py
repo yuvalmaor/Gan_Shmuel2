@@ -3,13 +3,4 @@ import logging
 
 @pytest.fixture()
 def remote_address():
-    return 'http://localhost:8084'
-
-@pytest.fixture()
-def logger():
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s',
-                        handlers= [
-                        logging.FileHandler("logs/weight-tests-logs.txt"),
-                        ])
-    logger = logging.getLogger(__name__)
-    return logger
+    return 'http://ec2-13-200-131-223.ap-south-1.compute.amazonaws.com:8084'

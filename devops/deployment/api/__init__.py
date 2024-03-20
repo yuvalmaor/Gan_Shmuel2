@@ -3,7 +3,7 @@ from multiprocessing import Pool
 
 from api.tasks import deploy, gunicorn_logger, health_check, monitor,revert
 from api.util import SERVICES_PORT, init_monitor_db, scheduler,get_image_list
-from flask import Flask, jsonify, request,render_template,redirect,url_for
+from flask import Flask, jsonify, request,render_template,redirect,url_for,send_file
 from swagger_ui import api_doc
 from api.forms import VersionForm
 
@@ -77,5 +77,20 @@ def create_app():
          if form.validate():
             revert(service,form.version.data,form.email.data)
       return redirect(url_for('request_revert'))
+   
+   @app.get("/logs")
+   def logs():
+      return render_template('logs.html')
+   
+   @app.get("/log-download")
+   def download_log():
+      return send_file("/logs/api.log",mimetype="text/plain",as_attachment=True)
+   
+   @app.get("/log-stream")
+   def log_stream():
+      gunicorn_logger.info("test")
+      with open('/logs/api.log') as fp:
+         text = fp.read()
+      return text ,{'Content-Type':'text/plain'}
 
    return app

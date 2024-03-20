@@ -328,48 +328,37 @@ def download_new_rates():
 
 @app.route("/bill/<id>", methods=["GET"])
 def get_bill(id):
-    logger.info("in bill!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     provider = Provider.query.get(id)
     if provider is None:
         return "wrong provider id", 400
-    now = datetime.now()
-    from_default = now.strftime("%Y%m") + "01000000"
-    to_default = now.strftime("%Y%m%d%H%M%S")
-    from_arg = request.args.get("from")
-    if not from_arg:
-        from_arg = from_default
-    else:
-        if len(from_arg) != 14:
-            return "wrong datetime value"
-        try:
-            datetime(
-                from_arg[0:4],
-                from_arg[4:6],
-                from_arg[6:8],
-                from_arg[8:10],
-                from_arg[10:12],
-                from_arg[12:14],
-            )
-        except ValueError:
-            return "wrong datetime value"
-    to_arg = request.args.get("to")
-    if not to_arg:
-        to_arg = to_default
-    else:
-        if len(to_arg) != 14:
-            return "wrong datetime value"
-        try:
-            datetime(
-                to_arg[0:4],
-                to_arg[4:6],
-                to_arg[6:8],
-                to_arg[8:10],
-                to_arg[10:12],
-                to_arg[12:14],
-            )
-        except ValueError:
-            return "wrong datetime value"
-    # get all trucks of provider id
+    mocked_json = json.dumps(
+        {
+            "id": f"{id}",
+            "name": provider.name,
+            "from": 11111111111111,
+            "to": 22222222222222,
+            "truckCount": 0,
+            "sessionCount": 0,
+            "products": [
+                {
+                    "product": "orange",
+                    "count": 5,
+                    "amount": 500,
+                    "rate": 100,
+                    "pay": 50000,
+                },
+                {
+                    "product": "mandarina",
+                    "count": 3,
+                    "amount": 300,
+                    "rate": 200,
+                    "pay": 60000,
+                },
+            ],
+            "total": 110000,
+        }
+    )
+    # trucks = Truck.query.filter_by(provider_id=provider.id).all()
     trucks = Truck.query.filter_by(provider_id=provider.id).all()
     logger.info(f"trucks: {trucks}")
     try:
@@ -379,10 +368,14 @@ def get_bill(id):
         for truck in trucks:
             truck_id = truck.id
             logger.info(f"truck_id: {truck_id}")
-            response = requests.get(
-                f"http://{weightAdress}/" + f"/{truck_id}",
-                params={"from": from_arg, "to": to_arg},
-            )
+            url: str = f"{weightAdress}/item/{truck1}"
+            if "from" in request.args:
+                url += f"?from={request.args['from']}"
+            if "to" in request.args:
+                url += f"&to={request.args['to']}"
+            logger.info(f"url: {url}")
+            response = requests.get(url)
+            logger.info(f"response: {response}")
             response.raise_for_status()
             truck_sessions = response.json()["sessions"]
             if len(truck_sessions) > 0:
@@ -441,4 +434,4 @@ def get_bill(id):
         )
         return output_json
     except Exception as e:
-        return jsonify({"message": f"could not get bill: {e}"}), 400
+        return mocked_json

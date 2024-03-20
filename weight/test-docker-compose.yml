@@ -3,6 +3,7 @@ services:
   db:
     image: mysql:8.3
     volumes:
+      - weight-database:/var/lib/mysql    
       - ./db:/docker-entrypoint-initdb.d
     environment:
       - MYSQL_RANDOM_ROOT_PASSWORD=yes
@@ -37,6 +38,8 @@ services:
         condition: service_healthy
 volumes:
   test-weight-logs:
+    external: true
+  weight-database:
     external: true
 networks:
   inner_network:

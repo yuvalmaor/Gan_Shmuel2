@@ -73,7 +73,7 @@ def create_app():
    @app.post("/revert/<service>")
    def revert_version(service):
       if service and service in ['weight','billing']:
-         form=VersionForm()
+         form=VersionForm(request.form)
          if form.validate():
             revert(service,form.version.data,form.email.data)
       return redirect(url_for('request_revert'))

@@ -169,7 +169,8 @@ def deploy(branch:str,merged:str,merged_commit:str) -> None:
       send_mail(**msg)
 
 @task
-def revert(service:str,image_tag,email):
+def revert(service:str,image_tag:str,email:str):
+   gunicorn_logger.info(f"started revert for {service} to tag:{image_tag}")
    try:
       client.images.get(f"{service}:{image_tag}").tag(service,'latest')
       deploy_docker_compose(service)

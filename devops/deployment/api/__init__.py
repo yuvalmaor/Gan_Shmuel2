@@ -88,7 +88,6 @@ def create_app():
    
    @app.get("/log-stream")
    def log_stream():
-      gunicorn_logger.info("test")
       with open('/logs/api.log') as fp:
          text = fp.read()
       return text ,{'Content-Type':'text/plain'}
